@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Trove — a journal for everything you love</title>
+  <meta name="description" content="Open-source journal for books, places, food and anything else you love.">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><img src="icons/icon.svg" alt="" width="28" height="28"><span>Trove</span></div>
+    <div class="top-actions">
+      <button id="syncBtn" class="icon-btn" title="Sync now" hidden>⟳</button>
+      <button id="settingsBtn" class="icon-btn" title="Settings">⚙︎</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="search-row">
+      <input id="search" type="search" placeholder="Search titles, notes, #tags…" autocomplete="off">
+      <select id="sort" aria-label="Sort">
+        <option value="recent">Recent</option>
+        <option value="rating">Top rated</option>
+        <option value="title">A–Z</option>
+      </select>
+    </div>
+    <nav id="catChips" class="chips" aria-label="Categories"></nav>
+    <div id="statusSeg" class="seg" role="tablist">
+      <button data-status="" class="on">All</button>
+      <button data-status="want">Want to</button>
+      <button data-status="doing">In progress</button>
+      <button data-status="done">Done</button>
+    </div>
+    <div id="activeTag" class="active-tag" hidden></div>
+    <section id="list" class="grid" aria-live="polite"></section>
+    <p id="empty" class="empty" hidden></p>
+  </main>
+
+  <button id="addBtn" class="fab" aria-label="Add entry">+</button>
+  <div id="toast" class="toast" hidden></div>
+
+  <!-- Entry editor -->
+  <dialog id="editor" class="sheet">
+    <form id="entryForm" method="dialog">
+      <div class="sheet-head">
+        <button type="button" class="link" data-close>Cancel</button>
+        <h2 id="editorTitle">New entry</h2>
+        <button type="submit" class="link strong">Save</button>
+      </div>
+      <div class="sheet-body">
+        <label class="photo-pick" id="photoPick">
+          <img id="photoPreview" alt="" hidden>
+          <span id="photoHint">＋ Add photo</span>
+          <input id="photoInput" type="file" accept="image/*" hidden>
+        </label>
+        <button type="button" id="photoRemove" class="link danger small" hidden>Remove photo</button>
+
+        <label>Title<input name="title" required maxlength="200" placeholder="e.g. Project Hail Mary"></label>
+        <label>Category<select name="categoryId" id="catSelect"></select></label>
+
+        <div class="field">
+          <span class="lbl">Status</span>
+          <div class="seg small" id="statusPick">
+            <button type="button" data-v="want">Want to</button>
+            <button type="button" data-v="doing">In progress</button>
+            <button type="button" data-v="done">Done</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="lbl">Rating</span>
+          <div class="stars-pick" id="ratingPick"></div>
+        </div>
+
+        <div class="two">
+          <label>Date<input name="date" type="date"></label>
+          <label>Link<input name="link" type="url" placeholder="https://"></label>
+        </div>
+        <label>Tags<input name="tags" placeholder="comma, separated, tags" autocomplete="off"></label>
+        <label>Notes<textarea name="notes" rows="6" placeholder="Thoughts, quotes, what you ordered…"></textarea></label>
+        <button type="button" id="deleteBtn" class="btn danger" hidden>Delete entry</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Settings -->
+  <dialog id="settings" class="sheet">
+    <div class="sheet-head">
+      <span></span><h2>Settings</h2>
+      <button type="button" class="link strong" data-close>Done</button>
+    </div>
+    <div class="sheet-body">
+      <h3>Categories</h3>
+      <div id="catManage"></div>
+      <form id="catAdd" class="row">
+        <input name="emoji" placeholder="🎲" maxlength="4" class="emoji-in">
+        <input name="name" placeholder="New category" required maxlength="40">
+        <button class="btn">Add</button>
+      </form>
+
+      <h3>Sync <small>(optional)</small></h3>
+      <p class="muted">Entries always live on this device. Add your self-hosted Trove server to sync between devices.</p>
+      <label>Server URL<input id="srvUrl" type="url" placeholder="https://trove.example.lan"></label>
+      <label>Access token<input id="srvToken" type="password" autocomplete="off"></label>
+      <div class="row">
+        <button id="syncSave" class="btn">Save &amp; sync</button>
+        <button id="syncOff" class="btn ghost">Turn off</button>
+      </div>
+      <p id="syncStatus" class="muted"></p>
+
+      <h3>Backup</h3>
+      <div class="row">
+        <button id="exportBtn" class="btn">Export JSON</button>
+        <label class="btn ghost">Import JSON<input id="importInput" type="file" accept="application/json,.json" hidden></label>
+      </div>
+
+      <p class="muted about">Trove is free &amp; open-source (MIT). <span id="stats"></span></p>
+    </div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

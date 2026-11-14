@@ -1,0 +1,12 @@
+services:
+  trove:
+    build: .
+    container_name: trove
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # Generate one with: openssl rand -hex 24
+      TROVE_TOKEN: ${TROVE_TOKEN:?Set TROVE_TOKEN in .env}
+    volumes:
+      - ./data:/data
