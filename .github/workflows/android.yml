@@ -3,7 +3,8 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    tags: ['v*']
+    branches: [main]
+    paths: ['web/**', 'capacitor.config.json', 'package.json', '.github/workflows/android.yml']
 
 jobs:
   apk:
@@ -33,7 +34,11 @@ jobs:
       - run: cp android/app/build/outputs/apk/debug/app-debug.apk trove.apk
       - uses: actions/upload-artifact@v4
         with: { name: trove-apk, path: trove.apk }
-      - name: Attach to release (tag builds)
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Publish release with direct APK download
         uses: softprops/action-gh-release@v2
-        with: { files: trove.apk }
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Trove build ${{ github.run_number }}
+          body: Download **trove.apk** below and open it on your Android phone.
+          make_latest: true
+          files: trove.apk

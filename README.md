@@ -42,7 +42,7 @@ Without Docker: `TROVE_TOKEN=yoursecret node server/server.js`. This needs Node 
 ### 3. Native Android app (APK)
 This uses [Capacitor](https://capacitorjs.com) to wrap the web app.
 
-**Easiest way:** push this repo to GitHub, go to **Actions → Build Android APK → Run workflow**, and download `trove-apk` when it finishes. If you push a tag such as `v1.0.0`, the APK is also attached to a GitHub Release.
+**Easiest way:** every change pushed to `main` builds a new APK and publishes it under **Releases**. Open the latest release on your phone and tap `trove.apk`. You can also start a build by hand from **Actions → Build Android APK → Run workflow**.
 
 **Building locally** requires Android Studio and JDK 21:
 ```bash
