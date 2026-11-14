@@ -21,7 +21,8 @@ jobs:
       - run: npx cap sync android
       - name: Use Trove icon
         run: |
-          for d in android/app/src/main/res/mipmap-*; do
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26
+          for d in android/app/src/main/res/mipmap-*dpi; do
             cp web/icons/icon-192.png "$d/ic_launcher.png"
             cp web/icons/icon-192.png "$d/ic_launcher_round.png"
             cp web/icons/icon-192.png "$d/ic_launcher_foreground.png"
