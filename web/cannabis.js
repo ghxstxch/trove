@@ -218,7 +218,7 @@ const openSections = () => new Set([...document.querySelectorAll('#cannaFields d
     if (b.dataset.u) { cn.cannUnit = b.dataset.u; return cannaRender(openSections()); }
     if (b.dataset.look) {
       const name = ($('#entryForm').title.value || cannaTitle).trim();
-      if (!name) return toast('Type the strain name in Title first');
+      if (!name) return toast('Type the strain name first');
       const q = encodeURIComponent(name);
       window.open(b.dataset.look === 'leafly' ? `https://www.leafly.com/search?q=${q}` : `https://www.allbud.com/marijuana-strains/search?q=${q}`, '_blank', 'noopener');
     }

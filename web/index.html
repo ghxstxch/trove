@@ -24,7 +24,7 @@
 
   <main>
     <div class="search-row">
-      <input id="search" type="search" placeholder="Search titles, notes, #tags…" autocomplete="off">
+      <input id="search" type="search" placeholder="Search names, notes, #tags…" autocomplete="off">
       <select id="sort" aria-label="Sort">
         <option value="recent">Recent</option>
         <option value="rating">Top rated</option>
@@ -68,7 +68,7 @@
         </label>
         <button type="button" id="photoRemove" class="link danger small" hidden>Remove photo</button>
 
-        <label>Title<input name="title" required maxlength="200" placeholder="e.g. Project Hail Mary"></label>
+        <label><span id="titleLabel">Name</span><input name="title" required maxlength="200"></label>
         <label>Category<select name="categoryId" id="catSelect"></select></label>
         <div id="cannaFields" class="canna" hidden></div>
 
@@ -254,6 +254,7 @@
 
   <script src="vendor/leaflet/leaflet.js"></script>
   <script src="app.js"></script>
+  <script src="nav.js"></script>
   <script src="cannabis.js"></script>
   <script src="visits.js"></script>
   <script src="share.js"></script>

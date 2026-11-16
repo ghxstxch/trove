@@ -128,6 +128,7 @@ function renderShelves(list) {
       `<button class="card add-card" data-add="${esc(c.id)}" style="--d:${Math.min(mine.length, 12) * 35}ms"><span>＋</span><small>Add to ${esc(c.name)}</small></button>`;
     return `<section class="shelf ${closed ? 'closed' : ''}" data-shelf="${esc(c.id)}">
       <div class="shelf-head">
+        <button class="shelf-grip" data-grip aria-label="Drag to reorder" title="Drag to reorder">⠿</button>
         <button class="shelf-title" data-open-cat="${esc(c.id)}">${esc(c.emoji)} ${esc(c.name)} <span class="chev">›</span></button>
         <span class="count">${mine.length} ${mine.length === 1 ? 'entry' : 'entries'}</span>
         <button class="shelf-toggle" data-toggle="${esc(c.id)}" aria-label="Collapse">⌄</button>
@@ -201,6 +202,7 @@ function render() {
   $('#list').hidden = ui.map;
   $('#placesMapWrap').hidden = !ui.map;
   $('#mapToggle').classList.toggle('on', ui.map);
+  if (typeof syncViewNav === 'function') syncViewNav();
   if (ui.map) { empty.hidden = true; renderPlacesMap(list); }
 }
 
@@ -325,7 +327,21 @@ function runSearch(q) {
 }
 
 let edLocation = null;
-function paintCanna() { $('#cannaFields').hidden = catById($('#catSelect').value)?.special !== 'cannabis'; }
+// What the main field is called depends on the category: a strain, a title, or just a name.
+function nameWord(cat) {
+  if (cat?.special === 'cannabis') return ['Strain', 'e.g. Blue Dream'];
+  if (/book|movie|tv|show|film|game|music|album|podcast|comic|anime/i.test(cat?.name || '')) return ['Title', 'e.g. Project Hail Mary'];
+  if (/place|travel|trip/i.test(cat?.name || '')) return ['Name', 'e.g. Starved Rock State Park'];
+  if (/food|restaurant|drink|coffee|recipe/i.test(cat?.name || '')) return ['Name', "e.g. Joe's Pizza"];
+  return ['Name', ''];
+}
+function paintCanna() {
+  const cat = catById($('#catSelect').value);
+  $('#cannaFields').hidden = cat?.special !== 'cannabis';
+  const [word, ph] = nameWord(cat);
+  $('#titleLabel').textContent = word;
+  $('#entryForm').title.placeholder = ph;
+}
 function paintLocation() {
   $('#locName').textContent = edLocation ? (edLocation.name || 'Pinned location') : 'Add a location';
   $('#locAddr').textContent = edLocation ? (edLocation.address || `${edLocation.lat}, ${edLocation.lng}`) : '';
@@ -569,6 +585,7 @@ function bind() {
   $('#search').addEventListener('input', e => { ui.q = e.target.value; render(); });
   $('#sort').addEventListener('change', e => withTransition(() => { ui.sort = e.target.value; render(); }));
   $('#list').addEventListener('click', e => {
+    if (e.target.closest('[data-grip]')) return; // drag handle, handled in nav.js
     const add = e.target.closest('[data-add]');
     if (add) { ui.cat = ''; openEditor(null, add.dataset.add); return; }
     const oc = e.target.closest('[data-open-cat]');
