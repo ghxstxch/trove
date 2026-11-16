@@ -1,7 +1,9 @@
 // Trove service worker: offline app shell. Bump VERSION when files change.
-const VERSION = 'trove-v1';
+const VERSION = 'trove-v2';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'manifest.webmanifest',
-  'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png'];
+  'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png',
+  'vendor/leaflet/leaflet.js', 'vendor/leaflet/leaflet.css', 'vendor/leaflet/images/marker-icon.png',
+  'vendor/leaflet/images/marker-icon-2x.png', 'vendor/leaflet/images/marker-shadow.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

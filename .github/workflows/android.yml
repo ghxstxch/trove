@@ -20,6 +20,10 @@ jobs:
       - run: npm install
       - run: npx cap add android
       - run: npx cap sync android
+      - name: Allow location access (map picker)
+        run: |
+          sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />#' android/app/src/main/AndroidManifest.xml
+          grep -c ACCESS_FINE_LOCATION android/app/src/main/AndroidManifest.xml
       - name: Use Trove icon
         run: |
           rm -rf android/app/src/main/res/mipmap-anydpi-v26

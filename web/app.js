@@ -26,7 +26,7 @@ const dbPutMany = items => tx('readwrite', s => items.forEach(i => s.put(i)));
 
 /* ---------- State ---------- */
 const items = new Map();            // id -> item (categories + entries, incl. tombstones)
-const ui = { cat: '', status: '', tag: '', q: '', sort: 'recent' };
+const ui = { cat: '', status: '', tag: '', q: '', sort: 'recent', map: false };
 const settings = loadSettings();
 
 const DEFAULT_CATS = [
@@ -78,7 +78,7 @@ function filtered() {
   if (q) {
     const terms = q.split(/\s+/);
     list = list.filter(e => {
-      const hay = [e.title, e.notes, e.link, ...(e.tags || []).map(t => '#' + t), catById(e.categoryId)?.name].join(' ').toLowerCase();
+      const hay = [e.title, e.notes, e.link, e.location?.name, e.location?.address, ...(e.tags || []).map(t => '#' + t), catById(e.categoryId)?.name].join(' ').toLowerCase();
       return terms.every(t => hay.includes(t));
     });
   }
@@ -102,6 +102,7 @@ function render() {
       ${media}
       <div class="body">
         <h4>${esc(e.title)}</h4>
+        ${e.location ? `<div class="place">📍 ${esc(e.location.name || e.location.address || 'Pinned')}</div>` : ''}
         <div class="meta"><span class="stars">${stars(e.rating)}</span><span class="badge ${e.status}">${STATUS[e.status] || ''}</span></div>
         ${e.tags?.length ? `<div class="tags">${e.tags.map(t => `<span class="tag">#${esc(t)}</span>`).join('')}</div>` : ''}
       </div></button>`;
@@ -113,6 +114,137 @@ function render() {
   at.hidden = !ui.tag;
   at.innerHTML = ui.tag ? `Tag: <b>#${esc(ui.tag)}</b> <button id="clearTag">✕ clear</button>` : '';
   $('#syncBtn').hidden = !settings.serverUrl;
+  $('#list').hidden = ui.map;
+  $('#placesMapWrap').hidden = !ui.map;
+  $('#mapToggle').classList.toggle('on', ui.map);
+  if (ui.map) { empty.hidden = true; renderPlacesMap(list); }
+}
+
+/* ---------- Maps (Leaflet + OpenStreetMap) ---------- */
+const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+const hasLeaflet = () => typeof L !== 'undefined';
+let placesMap, placesLayer;
+
+function renderPlacesMap(list) {
+  if (!hasLeaflet()) { $('#mapEmptyNote').hidden = false; $('#mapEmptyNote').textContent = 'Map could not load (offline?).'; return; }
+  if (!placesMap) {
+    placesMap = L.map('placesMap', { zoomControl: true }).setView([39.5, -98.35], 4);
+    L.tileLayer(TILE_URL, { attribution: TILE_ATTR, maxZoom: 19 }).addTo(placesMap);
+    placesLayer = L.featureGroup().addTo(placesMap);
+  }
+  setTimeout(() => placesMap.invalidateSize(), 0);
+  placesLayer.clearLayers();
+  const withLoc = list.filter(e => e.location && Number.isFinite(e.location.lat));
+  $('#mapEmptyNote').hidden = withLoc.length > 0;
+  $('#mapEmptyNote').textContent = 'No entries with a location match these filters yet.';
+  for (const e of withLoc) {
+    const c = catById(e.categoryId);
+    const pop = document.createElement('div');
+    pop.className = 'map-pop';
+    pop.innerHTML = (e.photo ? `<img src="${e.photo}" alt="">` : `<span class="e">${esc(c?.emoji || '📍')}</span>`) +
+      `<div><b>${esc(e.title)}</b><br><small>${stars(e.rating) || esc(STATUS[e.status] || '')}</small></div>`;
+    pop.addEventListener('click', () => openEditor(items.get(e.id)));
+    L.marker([e.location.lat, e.location.lng]).bindPopup(pop).addTo(placesLayer);
+  }
+  if (withLoc.length) {
+    setTimeout(() => placesMap.fitBounds(placesLayer.getBounds().pad(0.2), { maxZoom: 15 }), 50);
+  }
+}
+
+// --- Location picker ---
+let pickMap, pickMarker, pick = null, searchT, searchAbort;
+
+async function geo(path) {
+  const r = await fetch('https://nominatim.openstreetmap.org/' + path + '&format=jsonv2&addressdetails=0',
+    { headers: { 'Accept-Language': navigator.language || 'en' }, signal: searchAbort?.signal });
+  if (!r.ok) throw new Error('Search unavailable');
+  return r.json();
+}
+function shortAddr(full) { return (full || '').split(',').slice(0, 4).join(',').trim(); }
+
+function setPick(lat, lng, { name, address, zoom } = {}) {
+  pick = { lat: +lat.toFixed(6), lng: +lng.toFixed(6), name: name ?? pick?.name ?? '', address: address ?? '' };
+  if (!pickMarker) {
+    pickMarker = L.marker([lat, lng], { draggable: true }).addTo(pickMap);
+    pickMarker.on('dragend', () => { const p = pickMarker.getLatLng(); setPick(p.lat, p.lng); reverse(p.lat, p.lng); });
+  } else pickMarker.setLatLng([lat, lng]);
+  pickMap.setView([lat, lng], zoom || Math.max(pickMap.getZoom(), 15));
+  if (name !== undefined) $('#locLabel').value = name;
+  $('#locChosenAddr').textContent = pick.address || `${pick.lat}, ${pick.lng}`;
+}
+
+async function reverse(lat, lng) {
+  $('#locChosenAddr').textContent = 'Looking up address…';
+  try {
+    const r = await geo(`reverse?lat=${lat}&lon=${lng}&zoom=18`);
+    if (pick) { pick.address = shortAddr(r.display_name); $('#locChosenAddr').textContent = pick.address; }
+    if (!$('#locLabel').value && r.name) $('#locLabel').value = r.name;
+  } catch { $('#locChosenAddr').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`; }
+}
+
+function openLocPicker() {
+  if (!hasLeaflet()) { toast('Map needs an internet connection the first time'); return; }
+  $('#locPicker').showModal();
+  $('#locQuery').value = ''; $('#locResults').hidden = true;
+  if (!pickMap) {
+    pickMap = L.map('pickMap').setView([39.5, -98.35], 4);
+    L.tileLayer(TILE_URL, { attribution: TILE_ATTR, maxZoom: 19 }).addTo(pickMap);
+    pickMap.on('click', ev => { setPick(ev.latlng.lat, ev.latlng.lng, { name: '' }); reverse(ev.latlng.lat, ev.latlng.lng); });
+  }
+  setTimeout(() => pickMap.invalidateSize(), 50);
+  const cur = edLocation;
+  if (cur) { setPick(cur.lat, cur.lng, { name: cur.name, address: cur.address, zoom: 16 }); }
+  else {
+    pick = null; $('#locLabel').value = '';
+    if (pickMarker) { pickMarker.remove(); pickMarker = null; }
+    $('#locChosenAddr').textContent = 'Search, tap the map, or drag the pin.';
+    locateMe(true);
+  }
+}
+
+function locateMe(quiet) {
+  if (!navigator.geolocation) { if (!quiet) toast('Location not available'); return; }
+  navigator.geolocation.getCurrentPosition(
+    p => {
+      const { latitude: lat, longitude: lng } = p.coords;
+      if (quiet && !pick) { pickMap.setView([lat, lng], 14); return; } // just center the map
+      setPick(lat, lng, { name: '' }); reverse(lat, lng);
+    },
+    () => { if (!quiet) toast('Could not get your location — check permissions'); },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+}
+
+function runSearch(q) {
+  clearTimeout(searchT);
+  if (q.trim().length < 3) { $('#locResults').hidden = true; return; }
+  searchT = setTimeout(async () => {
+    searchAbort?.abort(); searchAbort = new AbortController();
+    try {
+      // Bias results toward what's visible on the map.
+      const b = pickMap.getBounds();
+      const vb = `${b.getWest()},${b.getNorth()},${b.getEast()},${b.getSouth()}`;
+      const res = await geo(`search?q=${encodeURIComponent(q)}&limit=8&viewbox=${vb}`);
+      const ul = $('#locResults');
+      ul.innerHTML = res.length ? res.map((r, i) =>
+        `<li data-i="${i}"><b>${esc(r.name || r.display_name.split(',')[0])}</b><small>${esc(shortAddr(r.display_name))}</small></li>`).join('')
+        : '<li><small>No results. Try adding a city.</small></li>';
+      ul.hidden = false;
+      ul.onclick = ev => {
+        const li = ev.target.closest('[data-i]'); if (!li) return;
+        const r = res[+li.dataset.i];
+        setPick(+r.lat, +r.lon, { name: r.name || r.display_name.split(',')[0], address: shortAddr(r.display_name), zoom: 16 });
+        ul.hidden = true;
+      };
+    } catch (err) { if (err.name !== 'AbortError') toast(err.message); }
+  }, 450);
+}
+
+let edLocation = null;
+function paintLocation() {
+  $('#locName').textContent = edLocation ? (edLocation.name || 'Pinned location') : 'Add a location';
+  $('#locAddr').textContent = edLocation ? (edLocation.address || `${edLocation.lat}, ${edLocation.lng}`) : '';
+  $('#locClear').hidden = !edLocation;
 }
 
 /* ---------- Editor ---------- */
@@ -133,7 +265,8 @@ function openEditor(entry) {
   edPhoto = entry?.photo || null;
   edRating = entry?.rating || 0;
   edStatus = entry?.status || 'want';
-  paintPhoto(); paintRating(); paintStatus();
+  edLocation = entry?.location || null;
+  paintPhoto(); paintRating(); paintStatus(); paintLocation();
   $('#deleteBtn').hidden = !entry;
   $('#editor').showModal();
 }
@@ -186,6 +319,7 @@ async function submitEntry(ev) {
     tags: [...new Set(f.tags.value.split(',').map(t => t.trim().replace(/^#/, '').toLowerCase()).filter(Boolean))],
     notes: f.notes.value,
     photo: edPhoto,
+    location: edLocation,
   });
   await save(e);
   $('#editor').close();
@@ -354,6 +488,17 @@ function bind() {
     try { edPhoto = await resizeImage(file); paintPhoto(); } catch (err) { toast(err.message); }
     e.target.value = '';
   });
+  $('#locPickBtn').addEventListener('click', openLocPicker);
+  $('#locClear').addEventListener('click', () => { edLocation = null; paintLocation(); });
+  $('#locMe').addEventListener('click', () => locateMe(false));
+  $('#locQuery').addEventListener('input', e => runSearch(e.target.value));
+  $('#locQuery').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); runSearch(e.target.value); } });
+  $('#locUse').addEventListener('click', () => {
+    if (!pick) { toast('Pick a spot first'); return; }
+    edLocation = { ...pick, name: $('#locLabel').value.trim() || pick.name || '' };
+    paintLocation(); $('#locPicker').close();
+  });
+  $('#mapToggle').addEventListener('click', () => { ui.map = !ui.map; render(); });
   $('#photoRemove').addEventListener('click', () => { edPhoto = null; paintPhoto(); });
   $('#deleteBtn').addEventListener('click', async () => {
     if (!editing || !confirm(`Delete "${editing.title}"?`)) return;

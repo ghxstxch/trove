@@ -9,12 +9,14 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="top">
     <div class="brand"><img src="icons/icon.svg" alt="" width="28" height="28"><span>Trove</span></div>
     <div class="top-actions">
+      <button id="mapToggle" class="icon-btn" title="Map of my places">🗺️</button>
       <button id="syncBtn" class="icon-btn" title="Sync now" hidden>⟳</button>
       <button id="settingsBtn" class="icon-btn" title="Settings">⚙︎</button>
     </div>
@@ -38,6 +40,10 @@
     </div>
     <div id="activeTag" class="active-tag" hidden></div>
     <section id="list" class="grid" aria-live="polite"></section>
+    <section id="placesMapWrap" class="places-map-wrap" hidden>
+      <div id="placesMap" class="places-map"></div>
+      <p id="mapEmptyNote" class="muted center" hidden>No entries with a location match these filters yet.</p>
+    </section>
     <p id="empty" class="empty" hidden></p>
   </main>
 
@@ -77,6 +83,15 @@
           <div class="stars-pick" id="ratingPick"></div>
         </div>
 
+        <div class="field" id="locField">
+          <span class="lbl">Location</span>
+          <button type="button" id="locPickBtn" class="loc-btn">
+            <span class="loc-ico">📍</span>
+            <span class="loc-text"><b id="locName">Add a location</b><small id="locAddr"></small></span>
+          </button>
+          <button type="button" id="locClear" class="link danger small" hidden>Remove location</button>
+        </div>
+
         <div class="two">
           <label>Date<input name="date" type="date"></label>
           <label>Link<input name="link" type="url" placeholder="https://"></label>
@@ -86,6 +101,27 @@
         <button type="button" id="deleteBtn" class="btn danger" hidden>Delete entry</button>
       </div>
     </form>
+  </dialog>
+
+  <!-- Location picker -->
+  <dialog id="locPicker" class="sheet loc-sheet">
+    <div class="sheet-head">
+      <button type="button" class="link" data-close>Cancel</button>
+      <h2>Choose location</h2>
+      <button type="button" id="locUse" class="link strong">Use</button>
+    </div>
+    <div class="loc-body">
+      <div class="loc-search">
+        <input id="locQuery" type="search" placeholder="Search a place or address…" autocomplete="off">
+        <button type="button" id="locMe" class="icon-btn" title="Use my location">◎</button>
+      </div>
+      <ul id="locResults" class="loc-results" hidden></ul>
+      <div id="pickMap" class="pick-map"></div>
+      <div class="loc-chosen">
+        <input id="locLabel" placeholder="Name (e.g. Joe's Pizza)" maxlength="120">
+        <small id="locChosenAddr" class="muted">Search, tap the map, or drag the pin.</small>
+      </div>
+    </div>
   </dialog>
 
   <!-- Settings -->
@@ -123,6 +159,7 @@
     </div>
   </dialog>
 
+  <script src="vendor/leaflet/leaflet.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
