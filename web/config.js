@@ -5,6 +5,8 @@ window.TROVE_CONFIG = {
   googleClientId: '159349047980-oi70dlugiv3pn20c4ptpjv22p99utg8e.apps.googleusercontent.com',
   googleApiKey: 'AIzaSyDaE5JRuF46ZQSedTTnWeOBOmhh5z_S9gg',
   googleOrigins: ['https://ghxstxch.github.io'],
+  // Android app sign-in: the "Android" OAuth client, with "Enable custom URI scheme" switched on.
+  googleAndroidClientId: '159349047980-581qd0p6vhaal6amk8l44cepq5dn2v96.apps.googleusercontent.com',
 
   // Spotify import. The redirect address must match the app's "Redirect URI" in the Spotify dashboard exactly.
   spotifyClientId: 'c95f7edd64bb4cafbaaca8193311a1d6',

@@ -25,6 +25,15 @@ jobs:
           sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.CAMERA" />#' android/app/src/main/AndroidManifest.xml
           grep -c 'permission.CAMERA' android/app/src/main/AndroidManifest.xml
           grep -n 'uses-permission' android/app/src/main/AndroidManifest.xml
+      - name: Let Google sign-in return to the app
+        run: |
+          ID=$(node -e "const s=require('fs').readFileSync('web/config.js','utf8');const m=s.match(/googleAndroidClientId:\s*'([^']+)\.apps\.googleusercontent\.com'/);process.stdout.write(m?m[1]:'')")
+          if [ -n "$ID" ]; then
+            SCHEME="com.googleusercontent.apps.$ID"
+            sed -i "0,/<\/activity>/s##    <intent-filter>\n                <action android:name=\"android.intent.action.VIEW\" />\n                <category android:name=\"android.intent.category.DEFAULT\" />\n                <category android:name=\"android.intent.category.BROWSABLE\" />\n                <data android:scheme=\"$SCHEME\" />\n            </intent-filter>\n        </activity>#" android/app/src/main/AndroidManifest.xml
+            grep -n -B6 -A2 "$SCHEME" android/app/src/main/AndroidManifest.xml
+            grep -n "launchMode" android/app/src/main/AndroidManifest.xml
+          fi
       - name: Tracking notification icon and label
         run: |
           RES=android/app/src/main/res

@@ -21,7 +21,7 @@ There are no accounts, ads, or tracking.
 ## Google sign-in and Drive sync (web version)
 The hosted web version opens with a sign-in screen. After signing in with Google, the journal syncs automatically through the user's own Google Drive (a hidden app folder, one small file per entry), so it shows up on every device they sign in on.
 
-To use this on your own copy, create a Google Cloud project with the Drive API enabled and an OAuth web client, then put the client ID and your site's address in `web/config.js`. The Android app doesn't have Google sign-in yet; it can sync through the self-hosted server.
+To use this on your own copy, create a Google Cloud project with the Drive API enabled and an OAuth web client, then put the client ID and your site's address in `web/config.js`. The Android app signs in through the phone's browser, using a second "Android" OAuth client (package name plus the signing key's SHA-1, with the custom URI scheme enabled) whose ID goes in `web/config.js` as `googleAndroidClientId`.
 
 ## Spotify (web version)
 Connect Spotify in Settings to import saved albums, liked songs, playlists and top artists or tracks into the Music category, and to fill a music entry from a Spotify search. Re-importing only adds what's new. To use this on your own copy, create an app at developer.spotify.com and put its client ID and redirect address in `web/config.js`. Spotify limits small apps to five users, added by hand in its dashboard.
