@@ -260,3 +260,4 @@ details.cx[open] > summary::before { rotate: 90deg; }
 .mini-stars button { border: 0; background: none; font-size: 1.4rem; padding: 0 1px; color: var(--line); transition: color .15s, scale .15s; }
 .mini-stars button.on { color: var(--star); }
 .mini-stars button:active { scale: 1.3; }
+.share-cat { display: block; margin: 4px 0 0; padding: 4px 0; }

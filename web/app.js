@@ -108,6 +108,7 @@ function cardHTML(e, i = 0) {
     ${media}
     <div class="body">
       <h4>${esc(e.title)}</h4>
+      ${e.sharedBy ? `<div class="place">👤 from ${esc(e.sharedBy)}${e.sharedRating ? ' · their rating ' + '★'.repeat(e.sharedRating) : ''}</div>` : ''}
       ${cannaLine(e) ? `<div class="place">🌿 ${esc(cannaLine(e))}</div>` : ''}
       ${e.location ? `<div class="place">📍 ${esc(e.location.name || e.location.address || 'Pinned')}</div>` : ''}
       <div class="meta"><span class="stars">${stars(e.rating)}</span><span class="badge ${e.status}">${STATUS[e.status] || ''}</span></div>
@@ -196,6 +197,7 @@ function render() {
   at.hidden = !ui.tag;
   at.innerHTML = ui.tag ? `Tag: <b>#${esc(ui.tag)}</b> <button id="clearTag">✕ clear</button>` : '';
   $('#syncBtn').hidden = !settings.serverUrl;
+  if (typeof paintShareCat === 'function') paintShareCat(list);
   $('#list').hidden = ui.map;
   $('#placesMapWrap').hidden = !ui.map;
   $('#mapToggle').classList.toggle('on', ui.map);
@@ -353,6 +355,7 @@ function openEditor(entry, presetCat) {
   edLocation = entry?.location || null;
   paintPhoto(); paintRating(); paintStatus(); paintLocation();
   $('#deleteBtn').hidden = !entry;
+  $('#shareEntryBtn').hidden = !entry;
   $('#editor').showModal();
 }
 
@@ -459,6 +462,7 @@ function exportJSON() {
 async function importJSON(file) {
   const data = JSON.parse(await file.text());
   if (!Array.isArray(data.items)) throw new Error('Not a Trove backup file');
+  if (data.share && typeof importShare === 'function') return importShare(data);
   let n = 0;
   const changed = [];
   for (const it of data.items) {

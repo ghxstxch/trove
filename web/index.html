@@ -39,6 +39,7 @@
       <button data-status="done">Done</button>
     </div>
     <div id="activeTag" class="active-tag" hidden></div>
+    <button id="shareCatBtn" class="link small share-cat" hidden></button>
     <button id="inboxBanner" class="inbox-banner" hidden></button>
     <section id="list" class="grid" aria-live="polite"></section>
     <section id="placesMapWrap" class="places-map-wrap" hidden>
@@ -100,6 +101,7 @@
         </div>
         <label>Tags<input name="tags" placeholder="comma, separated, tags" autocomplete="off"></label>
         <label>Notes<textarea name="notes" rows="6" placeholder="Thoughts, quotes, what you ordered…"></textarea></label>
+        <button type="button" id="shareEntryBtn" class="btn ghost" hidden>Share this entry with a friend</button>
         <button type="button" id="deleteBtn" class="btn danger" hidden>Delete entry</button>
       </div>
     </form>
@@ -236,6 +238,10 @@
       </div>
       <p id="ignoredRow" class="muted"></p>
 
+      <h3>Sharing</h3>
+      <label>Your name <small>(shown to friends you share with)</small><input id="shareName" maxlength="40" placeholder="e.g. T"></label>
+      <p class="muted">Share an entry from its edit screen, or a whole category from the category's page. Friends open the file with <b>Import JSON</b> below.</p>
+
       <h3>Backup</h3>
       <div class="row">
         <button id="exportBtn" class="btn">Export JSON</button>
@@ -250,6 +256,7 @@
   <script src="app.js"></script>
   <script src="cannabis.js"></script>
   <script src="visits.js"></script>
+  <script src="share.js"></script>
   <script src="vendor/qr/qrcode.js"></script>
   <script src="qr.js"></script>
 </body>

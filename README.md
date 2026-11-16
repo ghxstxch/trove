@@ -13,6 +13,7 @@ There are no accounts, ads, or tracking.
 - **Search and filtering:** full-text search (type `#tag` to match tags), filters for category, status, and tag, and sorting by recent, top rated, or A–Z.
 - **Works offline:** you can install it on your home screen like a regular app.
 - **Optional sync:** a self-hosted server that resolves conflicts with "last write wins".
+- **Sharing:** send one entry or a whole category to a friend as a small file. They add it with Import JSON, and it shows who it came from.
 - **Backups:** export and import everything as JSON.
 - **Optional 21+ section:** a Cannabis category with product type and kind, full cannabinoid and terpene breakdowns, detailed ratings, effects, smell and taste, and session notes. It's off by default and hidden unless switched on in Settings.
 - **Dark mode:** follows your system setting.
