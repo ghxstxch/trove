@@ -69,6 +69,16 @@
 
         <label>Title<input name="title" required maxlength="200" placeholder="e.g. Project Hail Mary"></label>
         <label>Category<select name="categoryId" id="catSelect"></select></label>
+        <div id="cannaFields" class="canna" hidden>
+          <div class="two">
+            <label>Type<select name="cForm"><option value="">—</option><option>Flower</option><option>Pre-roll</option><option>Vape</option><option>Edible</option><option>Concentrate</option><option>Tincture</option><option>Drink</option><option>Topical</option></select></label>
+            <label>Strain<select name="cStrain"><option value="">—</option><option>Indica</option><option>Sativa</option><option>Hybrid</option><option>CBD</option></select></label>
+          </div>
+          <div class="two">
+            <label>THC %<input name="cThc" inputmode="decimal" maxlength="6" placeholder="e.g. 24"></label>
+            <label>CBD %<input name="cCbd" inputmode="decimal" maxlength="6" placeholder="e.g. 0.5"></label>
+          </div>
+        </div>
 
         <div class="field">
           <span class="lbl">Status</span>
@@ -192,6 +202,10 @@
         <button id="syncShowQr" class="btn ghost" hidden>Show QR for another device</button>
       </div>
       <p id="syncStatus" class="muted"></p>
+
+      <h3>21+ content</h3>
+      <label class="switch-row"><span><b>Show 21+ sections</b><small>Adds a Cannabis section. When off, it and its entries are hidden on this device.</small></span>
+        <input type="checkbox" id="adultToggle"></label>
 
       <h3>Visits <small>(optional)</small></h3>
       <p class="muted">Trove can find places you've been and turn them into entries.</p>

@@ -235,3 +235,4 @@ dialog.sheet.closing::backdrop { animation: fadeOut .26s forwards; }
 .scan-target { position: absolute; inset: 14%; border: 3px solid #fff; border-radius: 18px; box-shadow: 0 0 0 100vmax rgba(0,0,0,.35); opacity: .9; }
 .qr-image { background: #fff; border-radius: 16px; padding: 8px; max-width: 320px; margin: 0 auto; width: 100%; }
 .qr-image svg { display: block; width: 100%; height: auto; }
+.canna { display: flex; flex-direction: column; gap: 14px; }

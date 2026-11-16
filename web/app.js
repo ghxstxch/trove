@@ -50,8 +50,11 @@ function saveSettings() {
   try { localStorage.setItem('trove.settings', JSON.stringify(settings)); } catch {}
 }
 
-const cats = () => [...items.values()].filter(i => i.kind === 'cat' && !i.deleted).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-const entries = () => [...items.values()].filter(i => i.kind === 'entry' && !i.deleted);
+// 21+ categories (and their entries) are hidden on this device unless switched on in Settings.
+const hiddenCat = c => !!(c && c.adult && !settings.adult);
+const cats = () => [...items.values()].filter(i => i.kind === 'cat' && !i.deleted && !hiddenCat(i)).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+const entries = () => [...items.values()].filter(i => i.kind === 'entry' && !i.deleted && !hiddenCat(items.get(i.categoryId)));
+const cannaLine = e => { const c = e.cannabis; return c ? [c.strain, c.form, c.thc ? c.thc + '% THC' : '', c.cbd ? c.cbd + '% CBD' : ''].filter(Boolean).join(' · ') : ''; };
 const catById = id => items.get(id);
 
 async function save(item) {
@@ -82,7 +85,7 @@ function filtered() {
   if (q) {
     const terms = q.split(/\s+/);
     list = list.filter(e => {
-      const hay = [e.title, e.notes, e.link, e.location?.name, e.location?.address, ...(e.tags || []).map(t => '#' + t), catById(e.categoryId)?.name].join(' ').toLowerCase();
+      const hay = [e.title, e.notes, e.link, e.location?.name, e.location?.address, cannaLine(e), ...(e.tags || []).map(t => '#' + t), catById(e.categoryId)?.name].join(' ').toLowerCase();
       return terms.every(t => hay.includes(t));
     });
   }
@@ -104,6 +107,7 @@ function cardHTML(e, i = 0) {
     ${media}
     <div class="body">
       <h4>${esc(e.title)}</h4>
+      ${cannaLine(e) ? `<div class="place">🌿 ${esc(cannaLine(e))}</div>` : ''}
       ${e.location ? `<div class="place">📍 ${esc(e.location.name || e.location.address || 'Pinned')}</div>` : ''}
       <div class="meta"><span class="stars">${stars(e.rating)}</span><span class="badge ${e.status}">${STATUS[e.status] || ''}</span></div>
       ${e.tags?.length ? `<div class="tags">${e.tags.map(t => `<span class="tag">#${esc(t)}</span>`).join('')}</div>` : ''}
@@ -318,6 +322,7 @@ function runSearch(q) {
 }
 
 let edLocation = null;
+function paintCanna() { $('#cannaFields').hidden = catById($('#catSelect').value)?.special !== 'cannabis'; }
 function paintLocation() {
   $('#locName').textContent = edLocation ? (edLocation.name || 'Pinned location') : 'Add a location';
   $('#locAddr').textContent = edLocation ? (edLocation.address || `${edLocation.lat}, ${edLocation.lng}`) : '';
@@ -335,6 +340,9 @@ function openEditor(entry, presetCat) {
   $('#catSelect').innerHTML = cats().map(c => `<option value="${esc(c.id)}">${esc(c.emoji)} ${esc(c.name)}</option>`).join('');
   f.title.value = entry?.title || '';
   f.categoryId.value = entry?.categoryId || presetCat || ui.cat || cats()[0]?.id || '';
+  const cn = entry?.cannabis || {};
+  f.cForm.value = cn.form || ''; f.cStrain.value = cn.strain || ''; f.cThc.value = cn.thc || ''; f.cCbd.value = cn.cbd || '';
+  paintCanna();
   f.date.value = entry?.date || new Date().toISOString().slice(0, 10);
   f.link.value = entry?.link || '';
   f.tags.value = (entry?.tags || []).join(', ');
@@ -397,6 +405,8 @@ async function submitEntry(ev) {
     notes: f.notes.value,
     photo: edPhoto,
     location: edLocation,
+    cannabis: catById(f.categoryId.value)?.special === 'cannabis'
+      ? { form: f.cForm.value, strain: f.cStrain.value, thc: f.cThc.value.trim(), cbd: f.cCbd.value.trim() } : null,
   });
   await save(e);
   closeSheet($('#editor'));
@@ -420,6 +430,7 @@ function renderSettings() {
   $('#syncStatus').textContent = settings.serverUrl
     ? (settings.lastSyncAt ? `Last synced ${new Date(settings.lastSyncAt).toLocaleString()}` : 'Not synced yet')
     : 'Sync is off — data stays on this device.';
+  $('#adultToggle').checked = !!settings.adult;
   if (typeof renderVisitSettings === 'function') renderVisitSettings();
   $('#stats').textContent = `${entries().length} entries in ${cats().length} categories.`;
 }
@@ -604,6 +615,17 @@ function bind() {
     paintLocation(); closeSheet($('#locPicker'));
   });
   $('#mapToggle').addEventListener('click', () => withTransition(() => { ui.map = !ui.map; render(); }));
+  $('#catSelect').addEventListener('change', paintCanna);
+  $('#adultToggle').addEventListener('change', async e => {
+    if (e.target.checked && !confirm('This turns on a Cannabis section meant for adults 21+ where it is legal. Continue?')) { e.target.checked = false; return; }
+    settings.adult = e.target.checked; saveSettings();
+    if (settings.adult && ![...items.values()].some(i => i.kind === 'cat' && i.special === 'cannabis' && !i.deleted)) {
+      const order = Math.max(-1, ...cats().map(c => c.order ?? 0)) + 1;
+      await save({ id: 'cat-cannabis', kind: 'cat', emoji: '🌿', name: 'Cannabis', special: 'cannabis', adult: true, order, createdAt: now() });
+    }
+    if (hiddenCat(items.get(ui.cat))) ui.cat = '';
+    renderSettings(); withTransition(render);
+  });
   $('#photoRemove').addEventListener('click', () => { edPhoto = null; paintPhoto(); });
   $('#deleteBtn').addEventListener('click', async () => {
     if (!editing || !confirm(`Delete "${editing.title}"?`)) return;

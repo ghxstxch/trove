@@ -14,6 +14,7 @@ There are no accounts, ads, or tracking.
 - **Works offline:** you can install it on your home screen like a regular app.
 - **Optional sync:** a self-hosted server that resolves conflicts with "last write wins".
 - **Backups:** export and import everything as JSON.
+- **Optional 21+ section:** a Cannabis category with type, strain, THC and CBD fields. It's off by default and hidden unless switched on in Settings.
 - **Dark mode:** follows your system setting.
 
 ## Visits (optional)
@@ -32,6 +33,10 @@ All three use the same code in `web/`.
 ### 1. Installable web app (no server needed)
 Serve the `web/` folder from any static host (GitHub Pages, Netlify, Nginx, and so on). It has to be served over HTTPS for the install option to appear.
 Then, on Android, open it in Chrome and choose **⋮ → Add to Home screen / Install app**.
+
+This repo publishes it to GitHub Pages automatically once you set **Settings → Pages → Source** to **GitHub Actions**.
+
+**iPhone and iPad:** open the hosted page in Safari, tap **Share → Add to Home Screen**. Everything works except background visit tracking, which needs the Android app.
 
 To try it locally: `npx serve web`, then open http://localhost:3000
 
