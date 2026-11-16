@@ -326,3 +326,7 @@ dialog.photo-view img { display: block; max-width: 96vw; max-height: 92dvh; bord
 .crop-box i[data-h=sw] { left: 0; bottom: 0; cursor: nesw-resize; } .crop-box i[data-h=sw]::after { left: 3px; bottom: 3px; }
 .crop-box i[data-h=se] { right: 0; bottom: 0; cursor: nwse-resize; } .crop-box i[data-h=se]::after { right: 3px; bottom: 3px; }
 .crop-tools { justify-content: center; } #cropAspect { width: 100%; }
+.chips .chip { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.chips .chip.dragging { position: relative; z-index: 5; box-shadow: 0 8px 20px rgba(0,0,0,.25); transition: none; }
+.chips.reordering .chip:not(.dragging) { transition: none; }
+.loc-results li.loc-head { padding: 6px 12px; cursor: default; background: var(--bg); }

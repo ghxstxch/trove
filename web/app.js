@@ -298,11 +298,45 @@ function locateMe(quiet) {
   navigator.geolocation.getCurrentPosition(
     p => {
       const { latitude: lat, longitude: lng } = p.coords;
-      if (quiet && !pick) { pickMap.setView([lat, lng], 14); return; } // just center the map
-      setPick(lat, lng, { name: '' }); reverse(lat, lng);
+      if (quiet && !pick) { pickMap.setView([lat, lng], 16); nearby(lat, lng); return; } // centre the map and list what's here
+      setPick(lat, lng, { name: '' }); reverse(lat, lng); nearby(lat, lng);
     },
     () => { if (!quiet) toast('Could not get your location — check permissions'); },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+}
+
+// Named places within a short walk of a point (OpenStreetMap), nearest first, so you can tap where you are.
+async function nearby(lat, lng) {
+  const ul = $('#locResults');
+  try {
+    const query = `[out:json][timeout:8];nwr(around:200,${lat.toFixed(6)},${lng.toFixed(6)})[name];out center 60;`;
+    const r = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: 'data=' + encodeURIComponent(query),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+    if (!r.ok) return;
+    const kinds = ['amenity', 'shop', 'tourism', 'leisure', 'office', 'craft', 'historic', 'healthcare', 'sport'];
+    const R = 6371000, rad = Math.PI / 180;
+    const dist = (a, b) => 2 * R * Math.asin(Math.sqrt(Math.sin((a - lat) * rad / 2) ** 2 + Math.cos(lat * rad) * Math.cos(a * rad) * Math.sin((b - lng) * rad / 2) ** 2));
+    const seen = new Set();
+    const places = ((await r.json()).elements || []).map(el => {
+      const t = el.tags || {}, k = kinds.find(x => t[x]);
+      const la = el.lat ?? el.center?.lat, lo = el.lon ?? el.center?.lon;
+      if (!k || la == null || seen.has(t.name)) return null;
+      seen.add(t.name);
+      const addr = [[t['addr:housenumber'], t['addr:street']].filter(Boolean).join(' '), t['addr:city']].filter(Boolean).join(', ');
+      return { name: t.name, kind: String(t[k]).replace(/_/g, ' '), lat: la, lng: lo, addr, d: dist(la, lo) };
+    }).filter(Boolean).sort((a, b) => a.d - b.d).slice(0, 15);
+    if (!places.length || !$('#locPicker').open || $('#locQuery').value.trim()) return;
+    ul.innerHTML = '<li class="loc-head"><small>Near you — tap where you are</small></li>' + places.map((p, i) =>
+      `<li data-i="${i}"><b>${esc(p.name)}</b><small>${esc(p.kind)} · ${Math.round(p.d)} m${p.addr ? ' · ' + esc(p.addr) : ''}</small></li>`).join('');
+    ul.hidden = false;
+    ul.onclick = ev => {
+      const li = ev.target.closest('[data-i]'); if (!li) return;
+      const p = places[+li.dataset.i];
+      setPick(p.lat, p.lng, { name: p.name, address: p.addr, zoom: 18 });
+      if (!p.addr) reverse(p.lat, p.lng);
+      ul.hidden = true;
+    };
+  } catch { /* offline or busy: the map and search still work */ }
 }
 
 function runSearch(q) {

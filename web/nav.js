@@ -111,3 +111,65 @@ function syncViewNav() {
   list.addEventListener('pointerup', end);
   list.addEventListener('pointercancel', end);
 })();
+
+/* ---------- Drag the category chips to reorder (press and hold, then drag sideways) ---------- */
+(function chipDrag() {
+  const row = $('#catChips');
+  let st = null, justDragged = false;
+  const chips = () => [...row.querySelectorAll('.chip[data-cat]')].filter(c => c.dataset.cat);
+
+  function begin() {
+    if (!st) return;
+    st.active = true; st.el.classList.add('dragging'); row.classList.add('reordering');
+    try { st.el.setPointerCapture(st.id); } catch {}
+    if (navigator.vibrate) navigator.vibrate(10);
+  }
+  function place(x) {
+    st.el.style.transform = '';
+    const natural = st.el.getBoundingClientRect().left;
+    st.el.style.transform = `translateX(${x - st.grab - natural}px) scale(1.06)`;
+  }
+  row.addEventListener('pointerdown', e => {
+    const el = e.target.closest('.chip[data-cat]'); if (!el || !el.dataset.cat) return;   // "All" stays first
+    const r = el.getBoundingClientRect();
+    st = { el, id: e.pointerId, x: e.clientX, y: e.clientY, grab: e.clientX - r.left, w: r.width, active: false,
+      timer: setTimeout(begin, e.pointerType === 'mouse' ? 180 : 320) };
+  });
+  row.addEventListener('pointermove', e => {
+    if (!st) return;
+    if (!st.active) {      // moved before the hold finished: it's a scroll or a tap, not a drag
+      if (Math.abs(e.clientX - st.x) > 8 || Math.abs(e.clientY - st.y) > 8) { clearTimeout(st.timer); st = null; }
+      return;
+    }
+    e.preventDefault();
+    const mid = e.clientX - st.grab + st.w / 2;
+    for (const other of chips()) {
+      if (other === st.el) continue;
+      const r = other.getBoundingClientRect(), half = r.left + r.width / 2;
+      const after = st.el.compareDocumentPosition(other) & Node.DOCUMENT_POSITION_FOLLOWING;
+      if (after && mid > half) { other.after(st.el); break; }
+      if (!after && mid < half) { other.before(st.el); break; }
+    }
+    place(e.clientX);
+    const rr = row.getBoundingClientRect();       // scroll the row when dragging near its ends
+    if (e.clientX > rr.right - 40) row.scrollLeft += 12; else if (e.clientX < rr.left + 40) row.scrollLeft -= 12;
+  });
+  async function end() {
+    if (!st) return;
+    clearTimeout(st.timer);
+    const was = st.active, el = st.el; st = null;
+    if (!was) return;
+    el.classList.remove('dragging'); el.style.transform = ''; row.classList.remove('reordering');
+    justDragged = true; setTimeout(() => { justDragged = false; }, 350);
+    const ids = chips().map(c => c.dataset.cat);
+    if (ids.join() === cats().map(c => c.id).join()) return;
+    for (const [i, id] of ids.entries()) { const c = items.get(id); if (c && c.order !== i) await save({ ...c, order: i }); }
+    render();
+  }
+  row.addEventListener('pointerup', end);
+  row.addEventListener('pointercancel', end);
+  row.addEventListener('click', e => { if (justDragged) { e.stopPropagation(); e.preventDefault(); } }, true);
+  row.addEventListener('contextmenu', e => { if (st) e.preventDefault(); });
+  // Once a drag has started, stop the page or the row from scrolling under the finger.
+  document.addEventListener('touchmove', e => { if (st && st.active) e.preventDefault(); }, { passive: false });
+})();
