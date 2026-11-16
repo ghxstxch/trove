@@ -90,25 +90,95 @@ function filtered() {
   return list.sort(by);
 }
 
+const vtName = id => 'c' + String(id).replace(/[^a-zA-Z0-9_-]/g, '');
+function cardHTML(e, i = 0) {
+  const c = catById(e.categoryId);
+  const media = e.photo
+    ? `<img class="thumb" src="${e.photo}" alt="" loading="lazy">`
+    : `<div class="ph">${esc(c?.emoji || '✨')}</div>`;
+  return `<button class="card" data-id="${esc(e.id)}" style="--d:${Math.min(i, 12) * 35}ms;view-transition-name:${vtName(e.id)}">
+    ${media}
+    <div class="body">
+      <h4>${esc(e.title)}</h4>
+      ${e.location ? `<div class="place">📍 ${esc(e.location.name || e.location.address || 'Pinned')}</div>` : ''}
+      <div class="meta"><span class="stars">${stars(e.rating)}</span><span class="badge ${e.status}">${STATUS[e.status] || ''}</span></div>
+      ${e.tags?.length ? `<div class="tags">${e.tags.map(t => `<span class="tag">#${esc(t)}</span>`).join('')}</div>` : ''}
+    </div></button>`;
+}
+
+// "Shelves": one row per category, entries shown as a swipeable card deck.
+function shelfMode() { return !ui.map && !ui.cat && !ui.q.trim() && !ui.tag && entries().length > 0; }
+
+function renderShelves(list) {
+  const collapsed = new Set(settings.collapsed || []);
+  return cats().map(c => {
+    const mine = list.filter(e => e.categoryId === c.id);
+    const closed = collapsed.has(c.id);
+    const cards = mine.map((e, i) => cardHTML(e, i)).join('') +
+      `<button class="card add-card" data-add="${esc(c.id)}" style="--d:${Math.min(mine.length, 12) * 35}ms"><span>＋</span><small>Add to ${esc(c.name)}</small></button>`;
+    return `<section class="shelf ${closed ? 'closed' : ''}" data-shelf="${esc(c.id)}">
+      <div class="shelf-head">
+        <button class="shelf-title" data-open-cat="${esc(c.id)}">${esc(c.emoji)} ${esc(c.name)} <span class="chev">›</span></button>
+        <span class="count">${mine.length} ${mine.length === 1 ? 'entry' : 'entries'}</span>
+        <button class="shelf-toggle" data-toggle="${esc(c.id)}" aria-label="Collapse">⌄</button>
+      </div>
+      <div class="shelf-body"><div class="deck"><div class="deck-track">${cards}</div></div></div>
+    </section>`;
+  }).join('');
+}
+
+// Deck effect: cards that run off the right edge stack up into a fanned pile.
+const DECK = { w: 150, gap: 12, peek: 14, maxStack: 6 };
+function layoutDeck(deck) {
+  const track = deck.firstElementChild; if (!track) return;
+  const cardsEls = [...track.children];
+  const step = DECK.w + DECK.gap;
+  track.style.width = (cardsEls.length * step + DECK.gap) + 'px';
+  const vw = deck.clientWidth, sl = deck.scrollLeft;
+  const edge = Math.max(0, vw - DECK.w - DECK.gap - DECK.peek * 3);
+  cardsEls.forEach((el, i) => {
+    let x = DECK.gap + i * step - sl, scale = 1, z = 100, op = 1;
+    if (x > edge) {
+      const k = (x - edge) / step;                         // how many cards "past" the edge
+      x = edge + Math.min(k, DECK.maxStack) * DECK.peek;
+      scale = 1 - Math.min(k, DECK.maxStack) * 0.045;
+      z = 100 - Math.ceil(k);
+      op = k > DECK.maxStack ? 0 : 1;
+    } else if (x < 0) {
+      const k = -x / step;                                 // cards scrolled away on the left
+      x = -Math.min(k, 3) * 8;
+      scale = 1 - Math.min(k, 3) * 0.05;
+      z = 100 - Math.ceil(k);
+      op = k > 3 ? 0 : 1;
+    }
+    el.style.transform = `translateX(${x + sl}px) scale(${scale})`;
+    el.style.zIndex = z;
+    el.style.opacity = op;
+  });
+}
+function layoutAllDecks() { document.querySelectorAll('.deck').forEach(layoutDeck); }
+
+// Smoothly animate between list states where the browser supports it.
+function withTransition(fn) {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (document.startViewTransition && !reduce) document.startViewTransition(fn); else fn();
+}
+
 function render() {
   renderChips();
   const list = filtered();
-  $('#list').innerHTML = list.map(e => {
-    const c = catById(e.categoryId);
-    const media = e.photo
-      ? `<img class="thumb" src="${e.photo}" alt="" loading="lazy">`
-      : `<div class="ph">${esc(c?.emoji || '✨')}</div>`;
-    return `<button class="card" data-id="${esc(e.id)}">
-      ${media}
-      <div class="body">
-        <h4>${esc(e.title)}</h4>
-        ${e.location ? `<div class="place">📍 ${esc(e.location.name || e.location.address || 'Pinned')}</div>` : ''}
-        <div class="meta"><span class="stars">${stars(e.rating)}</span><span class="badge ${e.status}">${STATUS[e.status] || ''}</span></div>
-        ${e.tags?.length ? `<div class="tags">${e.tags.map(t => `<span class="tag">#${esc(t)}</span>`).join('')}</div>` : ''}
-      </div></button>`;
-  }).join('');
+  const shelves = shelfMode();
+  const el = $('#list');
+  el.className = shelves ? 'shelves' : 'grid';
+  el.innerHTML = shelves ? renderShelves(list) : list.map((e, i) => cardHTML(e, i)).join('');
+  if (shelves) {
+    el.querySelectorAll('.deck').forEach(d => {
+      d.addEventListener('scroll', () => requestAnimationFrame(() => layoutDeck(d)), { passive: true });
+    });
+    layoutAllDecks();
+  }
   const empty = $('#empty');
-  empty.hidden = list.length > 0;
+  empty.hidden = shelves || list.length > 0;
   empty.textContent = entries().length ? 'Nothing matches those filters.' : 'Your trove is empty. Tap + to add your first book, place, or meal.';
   const at = $('#activeTag');
   at.hidden = !ui.tag;
@@ -250,14 +320,14 @@ function paintLocation() {
 /* ---------- Editor ---------- */
 let editing = null, edPhoto = null, edRating = 0, edStatus = 'want';
 
-function openEditor(entry) {
+function openEditor(entry, presetCat) {
   editing = entry || null;
   const f = $('#entryForm');
   f.reset();
   $('#editorTitle').textContent = entry ? 'Edit entry' : 'New entry';
   $('#catSelect').innerHTML = cats().map(c => `<option value="${esc(c.id)}">${esc(c.emoji)} ${esc(c.name)}</option>`).join('');
   f.title.value = entry?.title || '';
-  f.categoryId.value = entry?.categoryId || ui.cat || cats()[0]?.id || '';
+  f.categoryId.value = entry?.categoryId || presetCat || ui.cat || cats()[0]?.id || '';
   f.date.value = entry?.date || new Date().toISOString().slice(0, 10);
   f.link.value = entry?.link || '';
   f.tags.value = (entry?.tags || []).join(', ');
@@ -280,7 +350,7 @@ function paintPhoto() {
 }
 function paintRating() {
   $('#ratingPick').innerHTML = [1, 2, 3, 4, 5].map(n =>
-    `<button type="button" data-r="${n}" class="${n <= edRating ? 'on' : ''}" aria-label="${n} stars">★</button>`).join('');
+    `<button type="button" data-r="${n}" style="--i:${n}" class="${n <= edRating ? 'on' : ''}" aria-label="${n} stars">★</button>`).join('');
 }
 function paintStatus() {
   document.querySelectorAll('#statusPick button').forEach(b => b.classList.toggle('on', b.dataset.v === edStatus));
@@ -322,8 +392,9 @@ async function submitEntry(ev) {
     location: edLocation,
   });
   await save(e);
-  $('#editor').close();
-  render();
+  closeSheet($('#editor'));
+  withTransition(render);
+  bump();
 }
 
 /* ---------- Settings / categories ---------- */
@@ -440,6 +511,18 @@ async function sync({ loud = false } = {}) {
 }
 
 /* ---------- Misc ---------- */
+function closeSheet(d) {
+  if (!d.open) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { d.close(); return; }
+  d.classList.add('closing');
+  const done = () => { d.classList.remove('closing'); d.close(); };
+  d.addEventListener('animationend', done, { once: true });
+  setTimeout(() => d.open && d.classList.contains('closing') && done(), 400);
+}
+
+function bump() {
+  const f = $('#addBtn'); f.classList.remove('bump'); void f.offsetWidth; f.classList.add('bump');
+}
 let toastT;
 function toast(msg) {
   const t = $('#toast');
@@ -451,17 +534,31 @@ function toast(msg) {
 function bind() {
   $('#catChips').addEventListener('click', e => {
     const b = e.target.closest('[data-cat]'); if (!b) return;
-    ui.cat = b.dataset.cat; render();
+    withTransition(() => { ui.cat = b.dataset.cat; render(); });
   });
   $('#statusSeg').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
-    ui.status = b.dataset.status;
-    document.querySelectorAll('#statusSeg button').forEach(x => x.classList.toggle('on', x === b));
-    render();
+    withTransition(() => {
+      ui.status = b.dataset.status;
+      document.querySelectorAll('#statusSeg button').forEach(x => x.classList.toggle('on', x === b));
+      render();
+    });
   });
   $('#search').addEventListener('input', e => { ui.q = e.target.value; render(); });
-  $('#sort').addEventListener('change', e => { ui.sort = e.target.value; render(); });
+  $('#sort').addEventListener('change', e => withTransition(() => { ui.sort = e.target.value; render(); }));
   $('#list').addEventListener('click', e => {
+    const add = e.target.closest('[data-add]');
+    if (add) { ui.cat = ''; openEditor(null, add.dataset.add); return; }
+    const oc = e.target.closest('[data-open-cat]');
+    if (oc) { withTransition(() => { ui.cat = oc.dataset.openCat; render(); }); scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    const tg = e.target.closest('[data-toggle]');
+    if (tg) {
+      const set = new Set(settings.collapsed || []), id = tg.dataset.toggle;
+      set.has(id) ? set.delete(id) : set.add(id);
+      settings.collapsed = [...set]; saveSettings();
+      tg.closest('.shelf').classList.toggle('closed', set.has(id));
+      return;
+    }
     const tag = e.target.closest('.tag');
     if (tag) { ui.tag = tag.textContent.slice(1); render(); return; }
     const card = e.target.closest('.card'); if (!card) return;
@@ -473,7 +570,7 @@ function bind() {
     openEditor(null);
   });
 
-  document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
+  document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeSheet(b.closest('dialog'))));
   $('#entryForm').addEventListener('submit', submitEntry);
   $('#ratingPick').addEventListener('click', e => {
     const b = e.target.closest('[data-r]'); if (!b) return;
@@ -496,14 +593,14 @@ function bind() {
   $('#locUse').addEventListener('click', () => {
     if (!pick) { toast('Pick a spot first'); return; }
     edLocation = { ...pick, name: $('#locLabel').value.trim() || pick.name || '' };
-    paintLocation(); $('#locPicker').close();
+    paintLocation(); closeSheet($('#locPicker'));
   });
-  $('#mapToggle').addEventListener('click', () => { ui.map = !ui.map; render(); });
+  $('#mapToggle').addEventListener('click', () => withTransition(() => { ui.map = !ui.map; render(); }));
   $('#photoRemove').addEventListener('click', () => { edPhoto = null; paintPhoto(); });
   $('#deleteBtn').addEventListener('click', async () => {
     if (!editing || !confirm(`Delete "${editing.title}"?`)) return;
     await save({ id: editing.id, kind: 'entry', deleted: true, createdAt: editing.createdAt });
-    $('#editor').close(); render();
+    closeSheet($('#editor')); withTransition(render);
   });
 
   // Settings
@@ -554,6 +651,7 @@ function bind() {
     e.target.value = '';
   });
 
+  window.addEventListener('resize', () => requestAnimationFrame(layoutAllDecks));
   window.addEventListener('online', () => scheduleSync(500));
   document.addEventListener('visibilitychange', () => { if (!document.hidden) scheduleSync(500); });
 }

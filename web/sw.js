@@ -1,5 +1,5 @@
 // Trove service worker: offline app shell. Bump VERSION when files change.
-const VERSION = 'trove-v2';
+const VERSION = 'trove-v3';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'manifest.webmanifest',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png',
   'vendor/leaflet/leaflet.js', 'vendor/leaflet/leaflet.css', 'vendor/leaflet/images/marker-icon.png',
