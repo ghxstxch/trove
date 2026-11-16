@@ -76,6 +76,7 @@
           <span id="photoCount" class="photo-count" hidden></span>
         </div>
         <div id="photoStrip" class="photo-strip" hidden></div>
+        <button type="button" id="photoEdit" class="link small" hidden>✂️ Crop / rotate this photo</button>
         <div class="row photo-actions">
           <label class="btn ghost">📷 Take photo<input id="photoCam" type="file" accept="image/*" capture="environment" hidden></label>
           <label class="btn ghost">🖼️ Choose photos<input id="photoInput" type="file" accept="image/*" multiple hidden></label>
@@ -199,6 +200,32 @@
     </div>
   </dialog>
 
+  <!-- Full-size photo -->
+  <dialog id="photoView" class="photo-view"><img id="photoViewImg" alt=""><button type="button" class="pv-close" data-close aria-label="Close">✕</button>
+    <button type="button" id="photoViewEdit" class="pv-edit">✂️ Crop / rotate</button></dialog>
+
+  <!-- Crop / rotate -->
+  <dialog id="cropper" class="sheet">
+    <div class="sheet-head">
+      <button type="button" class="link" id="cropCancel">Cancel</button>
+      <h2>Edit photo</h2>
+      <button type="button" class="link strong" id="cropSave">Save</button>
+    </div>
+    <div class="crop-body">
+      <div class="crop-stage" id="cropStage"><canvas id="cropCanvas"></canvas>
+        <div class="crop-box" id="cropBox"><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div></div>
+      <div class="row crop-tools">
+        <button type="button" class="btn ghost" id="cropLeft">⟲ Rotate left</button>
+        <button type="button" class="btn ghost" id="cropRight">⟳ Rotate right</button>
+      </div>
+      <div class="seg small" id="cropAspect">
+        <button type="button" data-a="0" class="on">Free</button><button type="button" data-a="1">Square</button>
+        <button type="button" data-a="1.3333">4:3</button><button type="button" data-a="0.75">3:4</button>
+      </div>
+      <p class="muted center">Drag the corners to crop, or drag inside the box to move it.</p>
+    </div>
+  </dialog>
+
   <!-- Settings -->
   <dialog id="settings" class="sheet">
     <div class="sheet-head">
@@ -317,6 +344,7 @@
   <script src="app.js"></script>
   <script src="nav.js"></script>
   <script src="cannabis.js"></script>
+  <script src="photoedit.js"></script>
   <script src="log.js"></script>
   <script src="visits.js"></script>
   <script src="share.js"></script>

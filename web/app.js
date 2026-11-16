@@ -392,6 +392,7 @@ function paintPhoto() {
   img.hidden = !cur;
   if (cur && /^(data:image\/|https:\/\/)/.test(cur)) img.src = cur; else img.removeAttribute('src');
   $('#photoHint').hidden = !!cur;
+  $('#photoEdit').hidden = !cur;
   $('#photoCount').hidden = edPhotos.length < 2;
   $('#photoCount').textContent = `${edPhotoIdx + 1} / ${edPhotos.length}`;
   const strip = $('#photoStrip');
