@@ -102,7 +102,7 @@ const vtName = id => 'c' + String(id).replace(/[^a-zA-Z0-9_-]/g, '');
 function cardHTML(e, i = 0) {
   const c = catById(e.categoryId);
   const media = e.photo
-    ? `<img class="thumb" src="${e.photo}" alt="" loading="lazy">`
+    ? `<div class="thumb-wrap"><img class="thumb" src="${e.photo}" alt="" loading="lazy">${photosOf(e).length > 1 ? `<span class="photo-count">${photosOf(e).length} 📷</span>` : ''}</div>`
     : `<div class="ph">${esc(c?.emoji || '✨')}</div>`;
   return `<button class="card" data-id="${esc(e.id)}" style="--d:${Math.min(i, 12) * 35}ms;view-transition-name:${vtName(e.id)}">
     ${media}
@@ -349,7 +349,9 @@ function paintLocation() {
 }
 
 /* ---------- Editor ---------- */
-let editing = null, edPhoto = null, edRating = 0, edStatus = 'want';
+const MAX_PHOTOS = 8;
+const photosOf = e => (e && Array.isArray(e.photos) && e.photos.length) ? e.photos : (e && e.photo ? [e.photo] : []);
+let editing = null, edPhotos = [], edPhotoIdx = 0, edRating = 0, edStatus = 'want';
 
 function openEditor(entry, presetCat) {
   editing = entry || null;
@@ -365,7 +367,7 @@ function openEditor(entry, presetCat) {
   f.link.value = entry?.link || '';
   f.tags.value = (entry?.tags || []).join(', ');
   f.notes.value = entry?.notes || '';
-  edPhoto = entry?.photo || null;
+  edPhotos = [...photosOf(entry)]; edPhotoIdx = 0;
   edRating = entry?.rating || 0;
   edStatus = entry?.status || 'want';
   edLocation = entry?.location || null;
@@ -376,11 +378,26 @@ function openEditor(entry, presetCat) {
 }
 
 function paintPhoto() {
-  const img = $('#photoPreview');
-  img.hidden = !edPhoto;
-  if (edPhoto) img.src = edPhoto; else img.removeAttribute('src');
-  $('#photoHint').hidden = !!edPhoto;
-  $('#photoRemove').hidden = !edPhoto;
+  edPhotoIdx = Math.max(0, Math.min(edPhotoIdx, edPhotos.length - 1));
+  const cur = edPhotos[edPhotoIdx], img = $('#photoPreview');
+  img.hidden = !cur;
+  if (cur) img.src = cur; else img.removeAttribute('src');
+  $('#photoHint').hidden = !!cur;
+  $('#photoCount').hidden = edPhotos.length < 2;
+  $('#photoCount').textContent = `${edPhotoIdx + 1} / ${edPhotos.length}`;
+  const strip = $('#photoStrip');
+  strip.hidden = !edPhotos.length;
+  strip.innerHTML = edPhotos.map((p, i) => `<div class="pthumb ${i === edPhotoIdx ? 'on' : ''}" data-i="${i}">
+      <img src="${p}" alt="">${i === 0 ? '<span class="cover">Cover</span>' : ''}
+      <button type="button" data-rm="${i}" aria-label="Remove photo">✕</button></div>`).join('') +
+    (edPhotos.length > 1 && edPhotoIdx > 0 ? '<button type="button" class="link small" id="photoCover">Make cover</button>' : '');
+}
+async function addPhotos(files) {
+  for (const file of files) {
+    if (edPhotos.length >= MAX_PHOTOS) { toast(`Up to ${MAX_PHOTOS} photos per entry`); break; }
+    try { edPhotos.push(await resizeImage(file)); edPhotoIdx = edPhotos.length - 1; } catch (err) { toast(err.message); }
+  }
+  paintPhoto();
 }
 function paintRating() {
   $('#ratingPick').innerHTML = [1, 2, 3, 4, 5].map(n =>
@@ -422,7 +439,8 @@ async function submitEntry(ev) {
     link: f.link.value.trim(),
     tags: [...new Set(f.tags.value.split(',').map(t => t.trim().replace(/^#/, '').toLowerCase()).filter(Boolean))],
     notes: f.notes.value,
-    photo: edPhoto,
+    photos: [...edPhotos],
+    photo: edPhotos[0] || null, // cover; also what older versions of Trove show
     location: edLocation,
     cannabis: (catById(f.categoryId.value)?.special === 'cannabis' && typeof cannaRead === 'function') ? cannaRead() : null,
   });
@@ -619,11 +637,17 @@ function bind() {
     const b = e.target.closest('[data-v]'); if (!b) return;
     edStatus = b.dataset.v; paintStatus();
   });
-  $('#photoInput').addEventListener('change', async e => {
-    const file = e.target.files[0]; if (!file) return;
-    try { edPhoto = await resizeImage(file); paintPhoto(); } catch (err) { toast(err.message); }
-    e.target.value = '';
+  for (const id of ['#photoInput', '#photoCam']) {
+    $(id).addEventListener('change', async e => { const files = [...e.target.files]; e.target.value = ''; await addPhotos(files); });
+  }
+  $('#photoStrip').addEventListener('click', e => {
+    if (e.target.id === 'photoCover') { edPhotos.unshift(edPhotos.splice(edPhotoIdx, 1)[0]); edPhotoIdx = 0; return paintPhoto(); }
+    const rm = e.target.closest('[data-rm]');
+    if (rm) { edPhotos.splice(+rm.dataset.rm, 1); return paintPhoto(); }
+    const th = e.target.closest('[data-i]');
+    if (th) { edPhotoIdx = +th.dataset.i; paintPhoto(); }
   });
+  $('#photoPick').addEventListener('click', () => { if (edPhotos.length > 1) { edPhotoIdx = (edPhotoIdx + 1) % edPhotos.length; paintPhoto(); } });
   $('#locPickBtn').addEventListener('click', openLocPicker);
   $('#locClear').addEventListener('click', () => { edLocation = null; paintLocation(); });
   $('#locMe').addEventListener('click', () => locateMe(false));
@@ -646,7 +670,6 @@ function bind() {
     if (hiddenCat(items.get(ui.cat))) ui.cat = '';
     renderSettings(); withTransition(render);
   });
-  $('#photoRemove').addEventListener('click', () => { edPhoto = null; paintPhoto(); });
   $('#deleteBtn').addEventListener('click', async () => {
     if (!editing || !confirm(`Delete "${editing.title}"?`)) return;
     await save({ id: editing.id, kind: 'entry', deleted: true, createdAt: editing.createdAt });

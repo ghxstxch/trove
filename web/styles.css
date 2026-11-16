@@ -268,3 +268,15 @@ details.cx[open] > summary::before { rotate: 90deg; }
 .shelf.dragging .shelf-grip { cursor: grabbing; color: var(--accent); }
 body.reordering { user-select: none; -webkit-user-select: none; }
 body.reordering .shelf:not(.dragging) { transition: none; }
+
+/* ---------- Multiple photos ---------- */
+.photo-pick { cursor: default; }
+.photo-count { position: absolute; right: 8px; bottom: 8px; background: rgba(0,0,0,.6); color: #fff; font-size: .72rem; padding: 2px 8px; border-radius: 999px; z-index: 1; }
+.thumb-wrap { position: relative; }
+.photo-strip { display: flex; gap: 8px; overflow-x: auto; align-items: center; padding: 2px; }
+.pthumb { position: relative; flex: none; width: 64px; height: 64px; border-radius: 10px; overflow: hidden; border: 2px solid transparent; animation: pop .3s; }
+.pthumb.on { border-color: var(--accent); }
+.pthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pthumb button { position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border-radius: 50%; border: 0; background: rgba(0,0,0,.65); color: #fff; font-size: .65rem; line-height: 1; padding: 0; }
+.pthumb .cover { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.6); color: #fff; font-size: .6rem; text-align: center; }
+.photo-actions .btn { flex: 1; text-align: center; }

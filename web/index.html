@@ -61,12 +61,16 @@
         <button type="submit" class="link strong">Save</button>
       </div>
       <div class="sheet-body">
-        <label class="photo-pick" id="photoPick">
+        <div class="photo-pick" id="photoPick">
           <img id="photoPreview" alt="" hidden>
-          <span id="photoHint">＋ Add photo</span>
-          <input id="photoInput" type="file" accept="image/*" hidden>
-        </label>
-        <button type="button" id="photoRemove" class="link danger small" hidden>Remove photo</button>
+          <span id="photoHint">No photos yet</span>
+          <span id="photoCount" class="photo-count" hidden></span>
+        </div>
+        <div id="photoStrip" class="photo-strip" hidden></div>
+        <div class="row photo-actions">
+          <label class="btn ghost">📷 Take photo<input id="photoCam" type="file" accept="image/*" capture="environment" hidden></label>
+          <label class="btn ghost">🖼️ Choose photos<input id="photoInput" type="file" accept="image/*" multiple hidden></label>
+        </div>
 
         <label><span id="titleLabel">Name</span><input name="title" required maxlength="200"></label>
         <label>Category<select name="categoryId" id="catSelect"></select></label>
