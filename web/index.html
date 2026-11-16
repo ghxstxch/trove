@@ -69,16 +69,7 @@
 
         <label>Title<input name="title" required maxlength="200" placeholder="e.g. Project Hail Mary"></label>
         <label>Category<select name="categoryId" id="catSelect"></select></label>
-        <div id="cannaFields" class="canna" hidden>
-          <div class="two">
-            <label>Type<select name="cForm"><option value="">—</option><option>Flower</option><option>Pre-roll</option><option>Vape</option><option>Edible</option><option>Concentrate</option><option>Tincture</option><option>Drink</option><option>Topical</option></select></label>
-            <label>Strain<select name="cStrain"><option value="">—</option><option>Indica</option><option>Sativa</option><option>Hybrid</option><option>CBD</option></select></label>
-          </div>
-          <div class="two">
-            <label>THC %<input name="cThc" inputmode="decimal" maxlength="6" placeholder="e.g. 24"></label>
-            <label>CBD %<input name="cCbd" inputmode="decimal" maxlength="6" placeholder="e.g. 0.5"></label>
-          </div>
-        </div>
+        <div id="cannaFields" class="canna" hidden></div>
 
         <div class="field">
           <span class="lbl">Status</span>
@@ -257,6 +248,7 @@
 
   <script src="vendor/leaflet/leaflet.js"></script>
   <script src="app.js"></script>
+  <script src="cannabis.js"></script>
   <script src="visits.js"></script>
   <script src="vendor/qr/qrcode.js"></script>
   <script src="qr.js"></script>

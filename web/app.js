@@ -54,7 +54,8 @@ function saveSettings() {
 const hiddenCat = c => !!(c && c.adult && !settings.adult);
 const cats = () => [...items.values()].filter(i => i.kind === 'cat' && !i.deleted && !hiddenCat(i)).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 const entries = () => [...items.values()].filter(i => i.kind === 'entry' && !i.deleted && !hiddenCat(items.get(i.categoryId)));
-const cannaLine = e => { const c = e.cannabis; return c ? [c.strain, c.form, c.thc ? c.thc + '% THC' : '', c.cbd ? c.cbd + '% CBD' : ''].filter(Boolean).join(' · ') : ''; };
+const cannaLine = e => (e.cannabis && typeof cannaSummary === 'function') ? cannaSummary(e.cannabis) : '';
+const cannaText = e => (e.cannabis && typeof cannaSearchText === 'function') ? cannaSearchText(e.cannabis) : '';
 const catById = id => items.get(id);
 
 async function save(item) {
@@ -85,7 +86,7 @@ function filtered() {
   if (q) {
     const terms = q.split(/\s+/);
     list = list.filter(e => {
-      const hay = [e.title, e.notes, e.link, e.location?.name, e.location?.address, cannaLine(e), ...(e.tags || []).map(t => '#' + t), catById(e.categoryId)?.name].join(' ').toLowerCase();
+      const hay = [e.title, e.notes, e.link, e.location?.name, e.location?.address, cannaText(e), ...(e.tags || []).map(t => '#' + t), catById(e.categoryId)?.name].join(' ').toLowerCase();
       return terms.every(t => hay.includes(t));
     });
   }
@@ -340,8 +341,7 @@ function openEditor(entry, presetCat) {
   $('#catSelect').innerHTML = cats().map(c => `<option value="${esc(c.id)}">${esc(c.emoji)} ${esc(c.name)}</option>`).join('');
   f.title.value = entry?.title || '';
   f.categoryId.value = entry?.categoryId || presetCat || ui.cat || cats()[0]?.id || '';
-  const cn = entry?.cannabis || {};
-  f.cForm.value = cn.form || ''; f.cStrain.value = cn.strain || ''; f.cThc.value = cn.thc || ''; f.cCbd.value = cn.cbd || '';
+  if (typeof cannaLoad === 'function') cannaLoad(entry?.cannabis, entry?.title);
   paintCanna();
   f.date.value = entry?.date || new Date().toISOString().slice(0, 10);
   f.link.value = entry?.link || '';
@@ -405,8 +405,7 @@ async function submitEntry(ev) {
     notes: f.notes.value,
     photo: edPhoto,
     location: edLocation,
-    cannabis: catById(f.categoryId.value)?.special === 'cannabis'
-      ? { form: f.cForm.value, strain: f.cStrain.value, thc: f.cThc.value.trim(), cbd: f.cCbd.value.trim() } : null,
+    cannabis: (catById(f.categoryId.value)?.special === 'cannabis' && typeof cannaRead === 'function') ? cannaRead() : null,
   });
   await save(e);
   closeSheet($('#editor'));

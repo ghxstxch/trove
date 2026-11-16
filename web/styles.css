@@ -236,3 +236,27 @@ dialog.sheet.closing::backdrop { animation: fadeOut .26s forwards; }
 .qr-image { background: #fff; border-radius: 16px; padding: 8px; max-width: 320px; margin: 0 auto; width: 100%; }
 .qr-image svg { display: block; width: 100%; height: auto; }
 .canna { display: flex; flex-direction: column; gap: 14px; }
+
+/* ---------- Cannabis detail ---------- */
+details.cx { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+details.cx > summary { list-style: none; cursor: pointer; padding: 12px 14px; font-weight: 600; color: var(--text); font-size: .95rem;
+  display: flex; align-items: center; gap: 8px; }
+details.cx > summary::-webkit-details-marker { display: none; }
+details.cx > summary::before { content: '›'; color: var(--accent); transition: rotate .2s; display: inline-block; }
+details.cx[open] > summary::before { rotate: 90deg; }
+.cx-sum { margin-left: auto; font-weight: 400; font-size: .8rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }
+.cx-body { padding: 4px 14px 14px; display: flex; flex-direction: column; gap: 12px; animation: rise .25s both; }
+.cx-body input, .cx-body select { background: var(--bg); }
+.inline { display: flex; gap: 6px; } .inline select { width: auto; }
+.cann-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.cann-grid .wide { grid-column: 1 / -1; }
+.cann-grid small { font-size: .72rem; }
+.cchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.cchips .chip { padding: 5px 11px; font-size: .85rem; background: var(--bg); color: var(--text); }
+.cchips .chip.on { background: var(--accent); }
+.chip-add { width: 130px !important; padding: 5px 11px !important; border-radius: 999px !important; font-size: .85rem !important; border-style: dashed !important; }
+.terp-row { display: grid; grid-template-columns: 1fr 90px auto; gap: 8px; align-items: center; color: var(--text); font-size: .9rem; padding: 3px 0; }
+.rate-row { display: flex; justify-content: space-between; align-items: center; color: var(--text); font-size: .9rem; }
+.mini-stars button { border: 0; background: none; font-size: 1.4rem; padding: 0 1px; color: var(--line); transition: color .15s, scale .15s; }
+.mini-stars button.on { color: var(--star); }
+.mini-stars button:active { scale: 1.3; }

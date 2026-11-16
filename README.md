@@ -14,7 +14,7 @@ There are no accounts, ads, or tracking.
 - **Works offline:** you can install it on your home screen like a regular app.
 - **Optional sync:** a self-hosted server that resolves conflicts with "last write wins".
 - **Backups:** export and import everything as JSON.
-- **Optional 21+ section:** a Cannabis category with type, strain, THC and CBD fields. It's off by default and hidden unless switched on in Settings.
+- **Optional 21+ section:** a Cannabis category with product type and kind, full cannabinoid and terpene breakdowns, detailed ratings, effects, smell and taste, and session notes. It's off by default and hidden unless switched on in Settings.
 - **Dark mode:** follows your system setting.
 
 ## Visits (optional)
@@ -69,6 +69,9 @@ npx cap sync android
 npx cap open android   # then build or run it from Android Studio
 ```
 After you edit anything in `web/`, run `npx cap sync android` again.
+
+### 4. Native iPhone app (needs a Mac)
+With Xcode installed, run `bash scripts/ios-setup.sh` from the repo folder and follow the steps it prints. A free Apple ID works for your own iPhone, but Apple makes free-account apps expire after 7 days, so you re-install from Xcode each week. A paid Apple Developer account removes that limit and allows TestFlight for sharing. This build has not been tested yet.
 
 ## How sync works
 - Every item (entry or category) has an `id` and an `updatedAt` timestamp. When an item is deleted, it's kept as a marker (`deleted: true`) so the deletion syncs to your other devices.
