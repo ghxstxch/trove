@@ -44,6 +44,8 @@ This uses [Capacitor](https://capacitorjs.com) to wrap the web app.
 
 **Easiest way:** every change pushed to `main` builds a new APK and publishes it under **Releases**. Open the latest release on your phone and tap `trove.apk`. You can also start a build by hand from **Actions → Build Android APK → Run workflow**.
 
+**Permanent signing key:** add two repo secrets under **Settings → Secrets and variables → Actions**: `TROVE_KEYSTORE` (the keystore file encoded as base64) and `TROVE_KEYSTORE_PASSWORD`. Every build is then signed with the same key, so updates install over the old version. Without these secrets, builds fall back to a throwaway debug key.
+
 **Building locally** requires Android Studio and JDK 21:
 ```bash
 npm install

@@ -32,10 +32,27 @@ jobs:
             cp web/icons/icon-192.png "$d/ic_launcher_round.png"
             cp web/icons/icon-192.png "$d/ic_launcher_foreground.png"
           done
-      - name: Build debug APK
-        working-directory: android
-        run: ./gradlew assembleDebug
-      - run: cp android/app/build/outputs/apk/debug/app-debug.apk trove.apk
+      - name: Build APK (signed with your permanent key if secrets are set)
+        env:
+          KEYSTORE_B64: ${{ secrets.TROVE_KEYSTORE }}
+          KEYSTORE_PW: ${{ secrets.TROVE_KEYSTORE_PASSWORD }}
+        run: |
+          cd android
+          if [ -n "$KEYSTORE_B64" ] && [ -n "$KEYSTORE_PW" ]; then
+            echo "Signing with permanent Trove key"
+            ./gradlew assembleRelease
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/trove.keystore"
+            BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+            "$BT/zipalign" -f -p 4 app/build/outputs/apk/release/app-release-unsigned.apk "$RUNNER_TEMP/aligned.apk"
+            "$BT/apksigner" sign --ks "$RUNNER_TEMP/trove.keystore" --ks-key-alias trove \
+              --ks-pass env:KEYSTORE_PW --key-pass env:KEYSTORE_PW --out ../trove.apk "$RUNNER_TEMP/aligned.apk"
+            "$BT/apksigner" verify --print-certs ../trove.apk | head -3
+            rm -f "$RUNNER_TEMP/trove.keystore"
+          else
+            echo "::warning::TROVE_KEYSTORE secrets not set - building a debug APK with a throwaway key"
+            ./gradlew assembleDebug
+            cp app/build/outputs/apk/debug/app-debug.apk ../trove.apk
+          fi
       - uses: actions/upload-artifact@v4
         with: { name: trove-apk, path: trove.apk }
       - name: Publish release with direct APK download
