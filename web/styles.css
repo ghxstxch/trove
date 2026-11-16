@@ -288,3 +288,10 @@ body.reordering .shelf:not(.dragging) { transition: none; }
 .gate p { margin: 0; color: var(--muted); max-width: 320px; }
 .gbtn { background: #fff; color: #1f1f1f; border-color: #dadce0; font-weight: 600; padding: 12px 22px; }
 .gate .gbtn { margin-top: 10px; font-size: 1rem; }
+
+/* ---------- Spotify ---------- */
+.sp-hit { display: flex; gap: 10px; align-items: center; width: 100%; text-align: left; padding: 8px; margin-bottom: 6px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--card); color: var(--text); animation: rise .25s both; }
+.sp-hit img, .sp-noimg { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; flex: none; display: grid; place-items: center; background: var(--bg); }
+.sp-hit span { display: flex; flex-direction: column; min-width: 0; }
+.sp-hit small { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

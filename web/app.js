@@ -41,6 +41,7 @@ const STATUS = { want: 'Want to', doing: 'In progress', done: 'Done' };
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
 const now = () => Date.now();
 const $ = (s, el = document) => el.querySelector(s);
+const safeImg = u => (typeof u === 'string' && /^(data:image\/|https:\/\/)/.test(u)) ? esc(u) : '';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 function loadSettings() {
@@ -87,7 +88,7 @@ function filtered() {
   if (q) {
     const terms = q.split(/\s+/);
     list = list.filter(e => {
-      const hay = [e.title, e.notes, e.link, e.location?.name, e.location?.address, cannaText(e), ...(e.tags || []).map(t => '#' + t), catById(e.categoryId)?.name].join(' ').toLowerCase();
+      const hay = [e.title, e.notes, e.link, e.location?.name, e.location?.address, cannaText(e), e.music ? [e.music.artists, e.music.album, e.music.kind].join(' ') : '', ...(e.tags || []).map(t => '#' + t), catById(e.categoryId)?.name].join(' ').toLowerCase();
       return terms.every(t => hay.includes(t));
     });
   }
@@ -103,12 +104,13 @@ const vtName = id => 'c' + String(id).replace(/[^a-zA-Z0-9_-]/g, '');
 function cardHTML(e, i = 0) {
   const c = catById(e.categoryId);
   const media = e.photo
-    ? `<div class="thumb-wrap"><img class="thumb" src="${e.photo}" alt="" loading="lazy">${photosOf(e).length > 1 ? `<span class="photo-count">${photosOf(e).length} 📷</span>` : ''}</div>`
+    ? `<div class="thumb-wrap"><img class="thumb" src="${safeImg(e.photo)}" alt="" loading="lazy">${photosOf(e).length > 1 ? `<span class="photo-count">${photosOf(e).length} 📷</span>` : ''}</div>`
     : `<div class="ph">${esc(c?.emoji || '✨')}</div>`;
   return `<button class="card" data-id="${esc(e.id)}" style="--d:${Math.min(i, 12) * 35}ms;view-transition-name:${vtName(e.id)}">
     ${media}
     <div class="body">
       <h4>${esc(e.title)}</h4>
+      ${(e.music && typeof musicLine === 'function') ? `<div class="place">🎧 ${esc(musicLine(e.music))}</div>` : ''}
       ${e.sharedBy ? `<div class="place">👤 from ${esc(e.sharedBy)}${e.sharedRating ? ' · their rating ' + '★'.repeat(e.sharedRating) : ''}</div>` : ''}
       ${cannaLine(e) ? `<div class="place">🌿 ${esc(cannaLine(e))}</div>` : ''}
       ${e.location ? `<div class="place">📍 ${esc(e.location.name || e.location.address || 'Pinned')}</div>` : ''}
@@ -229,7 +231,7 @@ function renderPlacesMap(list) {
     const c = catById(e.categoryId);
     const pop = document.createElement('div');
     pop.className = 'map-pop';
-    pop.innerHTML = (e.photo ? `<img src="${e.photo}" alt="">` : `<span class="e">${esc(c?.emoji || '📍')}</span>`) +
+    pop.innerHTML = (e.photo ? `<img src="${safeImg(e.photo)}" alt="">` : `<span class="e">${esc(c?.emoji || '📍')}</span>`) +
       `<div><b>${esc(e.title)}</b><br><small>${stars(e.rating) || esc(STATUS[e.status] || '')}</small></div>`;
     pop.addEventListener('click', () => openEditor(items.get(e.id)));
     L.marker([e.location.lat, e.location.lng]).bindPopup(pop).addTo(placesLayer);
@@ -341,6 +343,7 @@ function paintCanna() {
   $('#cannaFields').hidden = cat?.special !== 'cannabis';
   const [word, ph] = nameWord(cat);
   $('#titleLabel').textContent = word;
+  if (typeof paintSpotifyFind === 'function') paintSpotifyFind(cat);
   $('#entryForm').title.placeholder = ph;
 }
 function paintLocation() {
@@ -352,10 +355,12 @@ function paintLocation() {
 /* ---------- Editor ---------- */
 const MAX_PHOTOS = 8;
 const photosOf = e => (e && Array.isArray(e.photos) && e.photos.length) ? e.photos : (e && e.photo ? [e.photo] : []);
+let edExtra = null; // extra fields an add-on (e.g. Spotify search) wants saved with the entry
 let editing = null, edPhotos = [], edPhotoIdx = 0, edRating = 0, edStatus = 'want';
 
 function openEditor(entry, presetCat) {
   editing = entry || null;
+  edExtra = null;
   const f = $('#entryForm');
   f.reset();
   $('#editorTitle').textContent = entry ? 'Edit entry' : 'New entry';
@@ -382,14 +387,14 @@ function paintPhoto() {
   edPhotoIdx = Math.max(0, Math.min(edPhotoIdx, edPhotos.length - 1));
   const cur = edPhotos[edPhotoIdx], img = $('#photoPreview');
   img.hidden = !cur;
-  if (cur) img.src = cur; else img.removeAttribute('src');
+  if (cur && /^(data:image\/|https:\/\/)/.test(cur)) img.src = cur; else img.removeAttribute('src');
   $('#photoHint').hidden = !!cur;
   $('#photoCount').hidden = edPhotos.length < 2;
   $('#photoCount').textContent = `${edPhotoIdx + 1} / ${edPhotos.length}`;
   const strip = $('#photoStrip');
   strip.hidden = !edPhotos.length;
   strip.innerHTML = edPhotos.map((p, i) => `<div class="pthumb ${i === edPhotoIdx ? 'on' : ''}" data-i="${i}">
-      <img src="${p}" alt="">${i === 0 ? '<span class="cover">Cover</span>' : ''}
+      <img src="${safeImg(p)}" alt="">${i === 0 ? '<span class="cover">Cover</span>' : ''}
       <button type="button" data-rm="${i}" aria-label="Remove photo">✕</button></div>`).join('') +
     (edPhotos.length > 1 && edPhotoIdx > 0 ? '<button type="button" class="link small" id="photoCover">Make cover</button>' : '');
 }
@@ -445,6 +450,7 @@ async function submitEntry(ev) {
     location: edLocation,
     cannabis: (catById(f.categoryId.value)?.special === 'cannabis' && typeof cannaRead === 'function') ? cannaRead() : null,
   });
+  if (edExtra) Object.assign(e, edExtra);
   await save(e);
   closeSheet($('#editor'));
   withTransition(render);

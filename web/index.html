@@ -82,6 +82,7 @@
         </div>
 
         <label><span id="titleLabel">Name</span><input name="title" required maxlength="200"></label>
+        <button type="button" id="spFind" class="btn ghost" hidden>🔎 Find on Spotify</button>
         <label>Category<select name="categoryId" id="catSelect"></select></label>
         <div id="cannaFields" class="canna" hidden></div>
 
@@ -180,6 +181,18 @@
     </div>
   </dialog>
 
+  <!-- Spotify search -->
+  <dialog id="spSearch" class="sheet">
+    <div class="sheet-head">
+      <button type="button" class="link" data-close>Cancel</button>
+      <h2>Find on Spotify</h2><span></span>
+    </div>
+    <div class="sheet-body">
+      <input id="spQuery" type="search" placeholder="Album, song or artist…" autocomplete="off">
+      <div id="spResults"></div>
+    </div>
+  </dialog>
+
   <!-- Settings -->
   <dialog id="settings" class="sheet">
     <div class="sheet-head">
@@ -261,6 +274,24 @@
       </div>
       <p id="ignoredRow" class="muted"></p>
 
+      <div id="spBox" hidden>
+        <h3>Spotify</h3>
+        <p id="spStatus" class="muted"></p>
+        <div id="spOpts" hidden>
+          <label class="switch-row"><span><b>Saved albums</b></span><input type="checkbox" data-sp="albums"></label>
+          <label class="switch-row"><span><b>Liked songs</b><small>Newest 500</small></span><input type="checkbox" data-sp="tracks"></label>
+          <label class="switch-row"><span><b>Playlists</b><small>One entry per playlist</small></span><input type="checkbox" data-sp="playlists"></label>
+          <label class="switch-row"><span><b>Top artists</b></span><input type="checkbox" data-sp="topArtists"></label>
+          <label class="switch-row"><span><b>Top tracks</b></span><input type="checkbox" data-sp="topTracks"></label>
+          <label class="switch-row"><span><b>Check Spotify when Trove opens</b><small>At most once a day</small></span><input type="checkbox" data-sp="auto"></label>
+        </div>
+        <div class="row">
+          <button id="spConnect" class="btn">Connect Spotify</button>
+          <button id="spImport" class="btn" hidden>Import now</button>
+          <button id="spOff" class="btn ghost" hidden>Disconnect</button>
+        </div>
+      </div>
+
       <h3>Sharing</h3>
       <label>Your name <small>(shown to friends you share with)</small><input id="shareName" maxlength="40" placeholder="e.g. T"></label>
       <p class="muted">Share an entry from its edit screen, or a whole category from the category's page. Friends open the file with <b>Import JSON</b> below.</p>
@@ -283,6 +314,7 @@
   <script src="visits.js"></script>
   <script src="share.js"></script>
   <script src="gdrive.js"></script>
+  <script src="spotify.js"></script>
   <script src="vendor/qr/qrcode.js"></script>
   <script src="qr.js"></script>
 </body>

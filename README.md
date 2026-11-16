@@ -23,6 +23,9 @@ The hosted web version opens with a sign-in screen. After signing in with Google
 
 To use this on your own copy, create a Google Cloud project with the Drive API enabled and an OAuth web client, then put the client ID and your site's address in `web/config.js`. The Android app doesn't have Google sign-in yet; it can sync through the self-hosted server.
 
+## Spotify (web version)
+Connect Spotify in Settings to import saved albums, liked songs, playlists and top artists or tracks into the Music category, and to fill a music entry from a Spotify search. Re-importing only adds what's new. To use this on your own copy, create an app at developer.spotify.com and put its client ID and redirect address in `web/config.js`. Spotify limits small apps to five users, added by hand in its dashboard.
+
 ## Visits (optional)
 Trove can find places you've been and turn them into entries. Choose in **Settings → Visits** whether visits are suggested for review or added automatically, and how short a stop is ignored.
 
