@@ -138,7 +138,7 @@ function cannaRender(openSecs) {
     section('review', 'Detailed ratings', review, open.has('review')) +
     section('feel', 'Effects', feel, open.has('feel')) +
     section('senses', 'Smell & taste', senses, open.has('senses')) +
-    section('session', 'Session', session, open.has('session'));
+    section('session', 'Usual way you have it', session, open.has('session'));
   paintSums();
 }
 

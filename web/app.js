@@ -88,7 +88,7 @@ function filtered() {
   if (q) {
     const terms = q.split(/\s+/);
     list = list.filter(e => {
-      const hay = [e.title, e.notes, e.link, e.location?.name, e.location?.address, cannaText(e), e.music ? [e.music.artists, e.music.album, e.music.kind].join(' ') : '', ...(e.tags || []).map(t => '#' + t), catById(e.categoryId)?.name].join(' ').toLowerCase();
+      const hay = [e.title, e.notes, e.link, e.location?.name, e.location?.address, cannaText(e), ...(e.log || []).map(l => l.note), e.music ? [e.music.artists, e.music.album, e.music.kind].join(' ') : '', ...(e.tags || []).map(t => '#' + t), catById(e.categoryId)?.name].join(' ').toLowerCase();
       return terms.every(t => hay.includes(t));
     });
   }
@@ -111,6 +111,7 @@ function cardHTML(e, i = 0) {
     <div class="body">
       <h4>${esc(e.title)}</h4>
       ${(e.music && typeof musicLine === 'function') ? `<div class="place">🎧 ${esc(musicLine(e.music))}</div>` : ''}
+      ${(e.log && e.log.length && typeof logLine === 'function') ? `<div class="place">🔁 ${esc(logLine(e))}</div>` : ''}
       ${e.sharedBy ? `<div class="place">👤 from ${esc(e.sharedBy)}${e.sharedRating ? ' · their rating ' + '★'.repeat(e.sharedRating) : ''}</div>` : ''}
       ${cannaLine(e) ? `<div class="place">🌿 ${esc(cannaLine(e))}</div>` : ''}
       ${e.location ? `<div class="place">📍 ${esc(e.location.name || e.location.address || 'Pinned')}</div>` : ''}
@@ -344,6 +345,7 @@ function paintCanna() {
   const [word, ph] = nameWord(cat);
   $('#titleLabel').textContent = word;
   if (typeof paintSpotifyFind === 'function') paintSpotifyFind(cat);
+  if (typeof logPaint === 'function') logPaint(cat);
   $('#entryForm').title.placeholder = ph;
 }
 function paintLocation() {
@@ -368,6 +370,7 @@ function openEditor(entry, presetCat) {
   f.title.value = entry?.title || '';
   f.categoryId.value = entry?.categoryId || presetCat || ui.cat || cats()[0]?.id || '';
   if (typeof cannaLoad === 'function') cannaLoad(entry?.cannabis, entry?.title);
+  if (typeof logLoad === 'function') logLoad(entry?.log);
   paintCanna();
   f.date.value = entry?.date || new Date().toISOString().slice(0, 10);
   f.link.value = entry?.link || '';
@@ -450,6 +453,7 @@ async function submitEntry(ev) {
     location: edLocation,
     cannabis: (catById(f.categoryId.value)?.special === 'cannabis' && typeof cannaRead === 'function') ? cannaRead() : null,
   });
+  if (typeof logRead === 'function') e.log = logRead();
   if (edExtra) Object.assign(e, edExtra);
   await save(e);
   closeSheet($('#editor'));

@@ -7,7 +7,7 @@ function buildShare(list, title) {
     app: 'trove', share: 1, from: (settings.shareName || '').trim(), title, sharedAt: new Date().toISOString(),
     cats: catIds.map(id => catById(id)).filter(Boolean).map(c => ({ id: c.id, name: c.name, emoji: c.emoji, special: c.special, adult: c.adult })),
     // Personal status and sync details stay behind; the friend gets the content.
-    items: list.map(({ dirty, deleted, updatedAt, sharedBy, shareId, ...e }) => ({ ...e, kind: 'entry' })),
+    items: list.map(({ dirty, deleted, updatedAt, sharedBy, shareId, log, ...e }) => ({ ...e, kind: 'entry' })),
   };
 }
 
