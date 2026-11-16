@@ -43,7 +43,8 @@ docker compose up -d --build
 ```
 - The app is at `http://<server>:8080`, and the sync API is at `/api/sync`.
 - Your data is stored in `./data/trove.json`, which is plain JSON and easy to back up.
-- On each device, open **Settings → Sync** and enter the server URL and token.
+- On the first device, open **Settings → Sync** and enter the server URL and token. For every other device, tap **Show QR for another device** there, then on the new device tap **Scan QR to connect**.
+- The same scanner reads the connection QR code that Dawarich shows on its own pages.
 - For phones, put it behind HTTPS, for example with Caddy, Nginx Proxy Manager, or Tailscale (`tailscale serve`). The install option and offline mode both need HTTPS.
 
 Without Docker: `TROVE_TOKEN=yoursecret node server/server.js`. This needs Node 18 or newer and has no npm dependencies.

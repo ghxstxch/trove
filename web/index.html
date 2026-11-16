@@ -139,6 +139,31 @@
     </div>
   </dialog>
 
+  <!-- QR scanner -->
+  <dialog id="scanner" class="sheet">
+    <div class="sheet-head">
+      <button type="button" class="link" data-close>Cancel</button>
+      <h2>Scan QR code</h2><span></span>
+    </div>
+    <div class="scan-body">
+      <div class="scan-frame"><video id="scanVideo" playsinline muted></video><div class="scan-target"></div></div>
+      <p id="scanHint" class="muted center">Point the camera at a Trove or Dawarich connection QR code.</p>
+    </div>
+  </dialog>
+
+  <!-- Show connection QR -->
+  <dialog id="qrShow" class="sheet">
+    <div class="sheet-head">
+      <span></span><h2>Connect another device</h2>
+      <button type="button" class="link strong" data-close>Done</button>
+    </div>
+    <div class="sheet-body">
+      <div id="qrImage" class="qr-image"></div>
+      <p class="muted center">On the other device open Trove → Settings → Sync → <b>Scan QR to connect</b>.</p>
+      <p class="muted center">This code contains your access token. Only show it to your own devices.</p>
+    </div>
+  </dialog>
+
   <!-- Settings -->
   <dialog id="settings" class="sheet">
     <div class="sheet-head">
@@ -161,6 +186,10 @@
       <div class="row">
         <button id="syncSave" class="btn">Save &amp; sync</button>
         <button id="syncOff" class="btn ghost">Turn off</button>
+      </div>
+      <div class="row">
+        <button id="syncScan" class="btn ghost">📷 Scan QR to connect</button>
+        <button id="syncShowQr" class="btn ghost" hidden>Show QR for another device</button>
       </div>
       <p id="syncStatus" class="muted"></p>
 
@@ -189,6 +218,7 @@
       <label>API key<input id="dwKey" type="password" autocomplete="off"></label>
       <label class="switch-row"><span><b>Check Dawarich when Trove opens</b></span><input type="checkbox" id="dwAuto"></label>
       <div class="row">
+        <button id="dwScan" class="btn ghost">📷 Scan Dawarich QR</button>
         <button id="dwSave" class="btn">Save &amp; import</button>
         <button id="dwOff" class="btn ghost">Disconnect</button>
       </div>
@@ -214,5 +244,7 @@
   <script src="vendor/leaflet/leaflet.js"></script>
   <script src="app.js"></script>
   <script src="visits.js"></script>
+  <script src="vendor/qr/qrcode.js"></script>
+  <script src="qr.js"></script>
 </body>
 </html>
