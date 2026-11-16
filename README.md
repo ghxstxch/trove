@@ -16,6 +16,15 @@ There are no accounts, ads, or tracking.
 - **Backups:** export and import everything as JSON.
 - **Dark mode:** follows your system setting.
 
+## Visits (optional)
+Trove can find places you've been and turn them into entries. Choose in **Settings → Visits** whether visits are suggested for review or added automatically, and how short a stop is ignored.
+
+- **Built-in tracking (Android app only):** notes where you stop while the app is running, with a notification while it's on. It stores stops, not your route.
+- **Dawarich:** enter your Dawarich URL and API key to pull its visits. The Android app connects directly. In a browser the request goes through your Trove server, because Dawarich's API doesn't allow direct browser requests.
+- **Google Maps Timeline:** import the JSON file exported from your phone.
+
+Visit suggestions stay on the device and are not synced.
+
 ## Three ways to run it
 
 All three use the same code in `web/`.

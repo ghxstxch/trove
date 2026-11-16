@@ -2,6 +2,6 @@
   "appId": "io.github.trove.app",
   "appName": "Trove",
   "webDir": "web",
-  "android": { "allowMixedContent": true },
+  "android": { "allowMixedContent": true, "useLegacyBridge": true },
   "server": { "androidScheme": "https", "cleartext": true }
 }

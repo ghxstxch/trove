@@ -39,6 +39,7 @@
       <button data-status="done">Done</button>
     </div>
     <div id="activeTag" class="active-tag" hidden></div>
+    <button id="inboxBanner" class="inbox-banner" hidden></button>
     <section id="list" class="grid" aria-live="polite"></section>
     <section id="placesMapWrap" class="places-map-wrap" hidden>
       <div id="placesMap" class="places-map"></div>
@@ -124,6 +125,20 @@
     </div>
   </dialog>
 
+  <!-- Visit suggestions -->
+  <dialog id="inbox" class="sheet">
+    <div class="sheet-head">
+      <button type="button" class="link" id="inboxAddAll">Add all</button>
+      <h2>Visit suggestions</h2>
+      <button type="button" class="link strong" data-close>Done</button>
+    </div>
+    <div class="sheet-body">
+      <p class="muted">Add the places worth keeping. "Never here" stops Trove suggesting that spot again (good for home and work).</p>
+      <div id="inboxList"></div>
+      <p id="inboxEmpty" class="empty" hidden>No suggestions right now.</p>
+    </div>
+  </dialog>
+
   <!-- Settings -->
   <dialog id="settings" class="sheet">
     <div class="sheet-head">
@@ -149,6 +164,43 @@
       </div>
       <p id="syncStatus" class="muted"></p>
 
+      <h3>Visits <small>(optional)</small></h3>
+      <p class="muted">Trove can find places you've been and turn them into entries.</p>
+      <div class="field">
+        <span class="lbl">When a visit is found</span>
+        <div class="seg small" id="visitMode">
+          <button type="button" data-v="suggest">Suggest it first</button>
+          <button type="button" data-v="auto">Add automatically</button>
+        </div>
+      </div>
+      <div class="two">
+        <label>Ignore stops shorter than
+          <select id="visitMin"><option value="5">5 min</option><option value="10">10 min</option><option value="20">20 min</option><option value="30">30 min</option><option value="60">1 hour</option></select>
+        </label>
+        <label>Add to category<select id="visitCat"></select></label>
+      </div>
+      <label class="switch-row"><span><b>Track visits with this phone</b><small id="trackNote">Records where you stop while Trove is running. Android app only.</small></span>
+        <input type="checkbox" id="trackToggle"></label>
+      <p id="trackStatus" class="muted"></p>
+
+      <h4>Dawarich</h4>
+      <p class="muted">Pull visits from your own Dawarich server.</p>
+      <label>Dawarich URL<input id="dwUrl" type="url" placeholder="https://dawarich.example.lan"></label>
+      <label>API key<input id="dwKey" type="password" autocomplete="off"></label>
+      <label class="switch-row"><span><b>Check Dawarich when Trove opens</b></span><input type="checkbox" id="dwAuto"></label>
+      <div class="row">
+        <button id="dwSave" class="btn">Save &amp; import</button>
+        <button id="dwOff" class="btn ghost">Disconnect</button>
+      </div>
+      <p id="dwStatus" class="muted"></p>
+
+      <h4>Google Maps Timeline</h4>
+      <div class="row">
+        <label class="btn ghost">Import Timeline file<input id="tlInput" type="file" accept="application/json,.json" hidden></label>
+        <button id="inboxOpen" class="btn ghost">Review suggestions</button>
+      </div>
+      <p id="ignoredRow" class="muted"></p>
+
       <h3>Backup</h3>
       <div class="row">
         <button id="exportBtn" class="btn">Export JSON</button>
@@ -161,5 +213,6 @@
 
   <script src="vendor/leaflet/leaflet.js"></script>
   <script src="app.js"></script>
+  <script src="visits.js"></script>
 </body>
 </html>

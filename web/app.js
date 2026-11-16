@@ -6,8 +6,12 @@ const DB_NAME = 'trove', STORE = 'items';
 let db;
 function openDB() {
   return new Promise((res, rej) => {
-    const r = indexedDB.open(DB_NAME, 1);
-    r.onupgradeneeded = () => r.result.createObjectStore(STORE, { keyPath: 'id' });
+    const r = indexedDB.open(DB_NAME, 2);
+    r.onupgradeneeded = () => {
+      const d = r.result;
+      if (!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE, { keyPath: 'id' });
+      if (!d.objectStoreNames.contains('visits')) d.createObjectStore('visits', { keyPath: 'key' }); // local only
+    };
     r.onsuccess = () => res(r.result);
     r.onerror = () => rej(r.error);
   });
@@ -161,7 +165,10 @@ function layoutAllDecks() { document.querySelectorAll('.deck').forEach(layoutDec
 // Smoothly animate between list states where the browser supports it.
 function withTransition(fn) {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (document.startViewTransition && !reduce) document.startViewTransition(fn); else fn();
+  if (document.startViewTransition && !reduce) {
+    const t = document.startViewTransition(fn); // a newer transition may interrupt this one; that's fine
+    for (const k of ['ready', 'finished', 'updateCallbackDone']) t[k] && t[k].catch(() => {});
+  } else fn();
 }
 
 function render() {
@@ -413,6 +420,7 @@ function renderSettings() {
   $('#syncStatus').textContent = settings.serverUrl
     ? (settings.lastSyncAt ? `Last synced ${new Date(settings.lastSyncAt).toLocaleString()}` : 'Not synced yet')
     : 'Sync is off — data stays on this device.';
+  if (typeof renderVisitSettings === 'function') renderVisitSettings();
   $('#stats').textContent = `${entries().length} entries in ${cats().length} categories.`;
 }
 
@@ -669,6 +677,7 @@ function bind() {
   bind();
   render();
   scheduleSync(300);
+  if (typeof visitsBoot === 'function') visitsBoot();
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     try { navigator.serviceWorker.register('sw.js'); } catch {}
   }

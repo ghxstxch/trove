@@ -128,6 +128,29 @@ async function handleSync(req, res) {
   send(res, 200, { seq: state.seq, accepted, items: out });
 }
 
+/* ---------- Dawarich proxy (browsers can't call Dawarich directly: it sends no CORS headers) ---------- */
+async function handleDawarich(req, res) {
+  if (!authed(req)) return send(res, 401, { error: 'unauthorized' });
+  let body;
+  try { body = JSON.parse(await readBody(req)); } catch { return send(res, 400, { error: 'bad json' }); }
+  let target;
+  try {
+    target = new URL('/api/v1/visits', String(body.url));
+    if (!/^https?:$/.test(target.protocol)) throw new Error('bad protocol');
+  } catch { return send(res, 400, { error: 'bad Dawarich URL' }); }
+  for (const k of ['start_at', 'end_at', 'page', 'per_page']) {
+    if (body.params && body.params[k] != null) target.searchParams.set(k, String(body.params[k]));
+  }
+  try {
+    const r = await fetch(target, { headers: { Authorization: 'Bearer ' + String(body.apiKey || ''), Accept: 'application/json' },
+      signal: AbortSignal.timeout(20000) });
+    const text = await r.text();
+    send(res, r.status, text, { 'Content-Type': 'application/json' });
+  } catch (err) {
+    send(res, 502, { error: 'Could not reach Dawarich: ' + (err.cause?.code || err.message) });
+  }
+}
+
 /* ---------- server ---------- */
 const server = http.createServer(async (req, res) => {
   try {
@@ -135,6 +158,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'OPTIONS') return send(res, 204, '');
     if (pathname === '/api/health') return send(res, 200, { ok: true, app: 'trove' });
     if (pathname === '/api/sync' && req.method === 'POST') return await handleSync(req, res);
+    if (pathname === '/api/dawarich/visits' && req.method === 'POST') return await handleDawarich(req, res);
     if (pathname.startsWith('/api/')) return send(res, 404, { error: 'not found' });
     if (req.method === 'GET' || req.method === 'HEAD') return serveStatic(req, res, pathname);
     send(res, 405, 'Method not allowed');
