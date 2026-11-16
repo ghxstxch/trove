@@ -18,6 +18,11 @@ There are no accounts, ads, or tracking.
 - **Optional 21+ section:** a Cannabis category with product type and kind, full cannabinoid and terpene breakdowns, detailed ratings, effects, smell and taste, and session notes. It's off by default and hidden unless switched on in Settings.
 - **Dark mode:** follows your system setting.
 
+## Google sign-in and Drive sync (web version)
+The hosted web version opens with a sign-in screen. After signing in with Google, the journal syncs automatically through the user's own Google Drive (a hidden app folder, one small file per entry), so it shows up on every device they sign in on.
+
+To use this on your own copy, create a Google Cloud project with the Drive API enabled and an OAuth web client, then put the client ID and your site's address in `web/config.js`. The Android app doesn't have Google sign-in yet; it can sync through the self-hosted server.
+
 ## Visits (optional)
 Trove can find places you've been and turn them into entries. Choose in **Settings → Visits** whether visits are suggested for review or added automatically, and how short a stop is ignored.
 

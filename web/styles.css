@@ -280,3 +280,11 @@ body.reordering .shelf:not(.dragging) { transition: none; }
 .pthumb button { position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border-radius: 50%; border: 0; background: rgba(0,0,0,.65); color: #fff; font-size: .65rem; line-height: 1; padding: 0; }
 .pthumb .cover { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.6); color: #fff; font-size: .6rem; text-align: center; }
 .photo-actions .btn { flex: 1; text-align: center; }
+
+/* ---------- Sign-in screen ---------- */
+.gate { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; padding: 24px; text-align: center; animation: fadeIn .3s; }
+.gate h1 { margin: 0; font-size: 2rem; }
+.gate p { margin: 0; color: var(--muted); max-width: 320px; }
+.gbtn { background: #fff; color: #1f1f1f; border-color: #dadce0; font-weight: 600; padding: 12px 22px; }
+.gate .gbtn { margin-top: 10px; font-size: 1rem; }

@@ -1,6 +1,6 @@
 // Trove service worker: offline app shell. Bump VERSION when files change.
-const VERSION = 'trove-v10';
-const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'visits.js', 'nav.js', 'share.js', 'cannabis.js', 'qr.js', 'vendor/qr/qrcode.js', 'vendor/qr/jsQR.min.js', 'manifest.webmanifest',
+const VERSION = 'trove-v11';
+const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'visits.js', 'nav.js', 'share.js', 'gdrive.js', 'config.js', 'cannabis.js', 'qr.js', 'vendor/qr/qrcode.js', 'vendor/qr/jsQR.min.js', 'manifest.webmanifest',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png',
   'vendor/leaflet/leaflet.js', 'vendor/leaflet/leaflet.css', 'vendor/leaflet/images/marker-icon.png',
   'vendor/leaflet/images/marker-icon-2x.png', 'vendor/leaflet/images/marker-shadow.png'];

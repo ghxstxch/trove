@@ -13,6 +13,15 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <!-- Sign-in screen (web version) -->
+  <div id="gate" class="gate" hidden>
+    <img src="icons/icon.svg" alt="" width="84" height="84">
+    <h1>Trove</h1>
+    <p>A journal for everything you love.<br>Sign in to keep it in sync on all your devices.</p>
+    <button id="gateSignIn" class="btn gbtn">Sign in with Google</button>
+    <p id="gateMsg" class="muted"></p>
+    <button id="gateSkip" class="link small">Use on this device without an account</button>
+  </div>
   <header class="top">
     <div class="brand"><img src="icons/icon.svg" alt="" width="28" height="28"><span>Trove</span></div>
     <div class="top-actions">
@@ -178,6 +187,16 @@
       <button type="button" class="link strong" data-close>Done</button>
     </div>
     <div class="sheet-body">
+      <div id="acctBox" hidden>
+        <h3>Account</h3>
+        <p id="acctStatus" class="muted"></p>
+        <div class="row">
+          <button id="acctSignIn" class="btn gbtn">Sign in with Google</button>
+          <button id="acctSync" class="btn ghost" hidden>Sync now</button>
+          <button id="acctSignOut" class="btn ghost" hidden>Sign out</button>
+        </div>
+      </div>
+
       <h3>Categories</h3>
       <div id="catManage"></div>
       <form id="catAdd" class="row">
@@ -257,11 +276,13 @@
   </dialog>
 
   <script src="vendor/leaflet/leaflet.js"></script>
+  <script src="config.js"></script>
   <script src="app.js"></script>
   <script src="nav.js"></script>
   <script src="cannabis.js"></script>
   <script src="visits.js"></script>
   <script src="share.js"></script>
+  <script src="gdrive.js"></script>
   <script src="vendor/qr/qrcode.js"></script>
   <script src="qr.js"></script>
 </body>

@@ -64,6 +64,7 @@ async function save(item) {
   items.set(item.id, item);
   await dbPutMany([item]);
   scheduleSync();
+  if (typeof scheduleDrive === 'function') scheduleDrive();
 }
 
 /* ---------- Rendering ---------- */
@@ -197,7 +198,7 @@ function render() {
   const at = $('#activeTag');
   at.hidden = !ui.tag;
   at.innerHTML = ui.tag ? `Tag: <b>#${esc(ui.tag)}</b> <button id="clearTag">✕ clear</button>` : '';
-  $('#syncBtn').hidden = !settings.serverUrl;
+  $('#syncBtn').hidden = !settings.serverUrl && !settings.google;
   if (typeof paintShareCat === 'function') paintShareCat(list);
   $('#list').hidden = ui.map;
   $('#placesMapWrap').hidden = !ui.map;
@@ -509,6 +510,7 @@ async function importJSON(file) {
   }
   await dbPutMany(changed);
   scheduleSync();
+  if (typeof scheduleDrive === 'function') scheduleDrive();
   return n;
 }
 
@@ -715,7 +717,10 @@ function bind() {
     delete settings.serverUrl; delete settings.token; delete settings.lastSeq; delete settings.lastSyncAt;
     saveSettings(); renderSettings(); render(); toast('Sync turned off');
   });
-  $('#syncBtn').addEventListener('click', () => sync({ loud: true }).catch(() => {}));
+  $('#syncBtn').addEventListener('click', () => {
+    if (settings.serverUrl) sync({ loud: true }).catch(() => {});
+    if (settings.google && typeof driveSync === 'function') driveSync({ loud: true, interactive: true });
+  });
   $('#exportBtn').addEventListener('click', exportJSON);
   $('#importInput').addEventListener('change', async e => {
     const file = e.target.files[0]; if (!file) return;
