@@ -178,7 +178,7 @@ label > input, label > select, label > textarea { color: var(--text); font-size:
 .card { animation: rise .42s cubic-bezier(.2,.8,.2,1) both; animation-delay: var(--d, 0ms);
   transition: scale .15s ease, box-shadow .2s, opacity .2s; }
 .card:active { scale: .96; }
-.chip, .seg button, .btn, .icon-btn, .fab { transition: background .2s, color .2s, scale .15s, box-shadow .2s; }
+.chip, .seg button, .btn, .icon-btn { transition: background .2s, color .2s, scale .15s, box-shadow .2s; }
 .chip:active, .btn:active, .icon-btn:active, .seg button:active { scale: .94; }
 .fab:active { scale: .9; }
 .fab.bump { animation: bump .55s cubic-bezier(.2,.8,.2,1); }
@@ -330,3 +330,45 @@ dialog.photo-view img { display: block; max-width: 96vw; max-height: 92dvh; bord
 .chips .chip.dragging { position: relative; z-index: 5; box-shadow: 0 8px 20px rgba(0,0,0,.25); transition: none; }
 .chips.reordering .chip:not(.dragging) { transition: none; }
 .loc-results li.loc-head { padding: 6px 12px; cursor: default; background: var(--bg); }
+
+/* ---------- Simpler main screen: labelled bottom bar, tucked-away filters, map as its own page ---------- */
+main { padding-bottom: calc(110px + env(safe-area-inset-bottom)); }
+.tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: grid; grid-template-columns: 1fr 1fr auto 1fr 1fr; align-items: end;
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); background: color-mix(in srgb, var(--card) 94%, transparent); backdrop-filter: blur(12px);
+  border-top: 1px solid var(--line); }
+.tab { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; border: 0; background: none; color: var(--muted);
+  font-size: .72rem; padding: 6px 2px; border-radius: 12px; transition: color .2s, scale .15s; }
+.tab span { font-size: 1.3rem; line-height: 1; filter: grayscale(1); opacity: .7; transition: filter .2s, opacity .2s; }
+.tab.on { color: var(--accent); font-weight: 600; }
+.tab.on span { filter: none; opacity: 1; }
+.tab:active { scale: .92; }
+.tab i { position: absolute; top: 0; right: 22%; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: var(--danger); color: #fff;
+  font-size: .68rem; font-style: normal; font-weight: 700; display: grid; place-items: center; }
+.tab-add { width: 58px; height: 58px; margin: 0 10px 4px; border-radius: 20px; border: 0; font-size: 1.9rem; color: #fff;
+  background: linear-gradient(135deg, #14b8a6, #4f46e5); box-shadow: 0 6px 18px rgba(79,70,229,.35); translate: 0 -8px; transition: scale .15s; }
+.tab-add:active { scale: .9; }
+#addBtn.bump { animation: bump .55s cubic-bezier(.2,.8,.2,1); }
+.toast { bottom: calc(100px + env(safe-area-inset-bottom)); }
+
+.filter-btn { flex: none; padding: 0 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--text); font-size: .9rem; }
+.filter-btn.active { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.filter-panel { margin-top: 10px; padding: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; display: flex; flex-direction: column; gap: 12px;
+  animation: rise .25s both; }
+.filter-panel .seg { margin: 0; background: var(--bg); }
+.filter-panel .seg button { font-size: .8rem; }
+.filter-panel select { background: var(--bg); }
+
+.map-head { padding: 4px 0 0; }
+.map-head h2 { margin: 0 0 2px; font-size: 1.3rem; }
+.map-filter { flex-direction: row; align-items: center; gap: 8px; margin-top: 8px; font-size: .9rem; }
+.map-filter select { width: auto; flex: 1; }
+.places-map { height: calc(100dvh - 330px); }
+
+/* ---------- Location on an entry ---------- */
+#locEmpty .btn { flex: 1; }
+.loc-set { display: flex; flex-direction: column; gap: 8px; }
+.loc-mini { display: block; width: 100%; height: 150px; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); padding: 0; background: var(--card); cursor: pointer; }
+.loc-mini.leaflet-container { height: 150px; cursor: pointer; }
+.loc-set .loc-text { color: var(--text); font-size: .95rem; }
+.loc-quick { display: flex; flex-direction: column; gap: 4px; padding: 0 12px 8px; }
+.loc-quick .btn { width: 100%; }

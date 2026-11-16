@@ -115,6 +115,7 @@ const pending = () => [...visits.values()].filter(v => v.state === 'new').sort((
 function renderInboxBanner() {
   const n = pending().length, b = $('#inboxBanner');
   b.hidden = n === 0;
+  const dot = $('#inboxDot'); if (dot) { dot.hidden = n === 0; dot.textContent = n > 9 ? '9+' : String(n); }
   b.innerHTML = `<span>📍</span><b>${n} visit suggestion${n === 1 ? '' : 's'}</b><span class="chev">Review ›</span>`;
 }
 

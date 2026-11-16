@@ -25,27 +25,39 @@
   <header class="top">
     <div class="brand"><img src="icons/icon.svg" alt="" width="28" height="28"><span>Trove</span></div>
     <div class="top-actions">
-      <button id="mapToggle" class="icon-btn" title="Map of my places">🗺️</button>
       <button id="syncBtn" class="icon-btn" title="Sync now" hidden>⟳</button>
-      <button id="settingsBtn" class="icon-btn" title="Settings">⚙︎</button>
     </div>
   </header>
 
   <main>
-    <div class="search-row">
-      <input id="search" type="search" placeholder="Search names, notes, #tags…" autocomplete="off">
-      <select id="sort" aria-label="Sort">
-        <option value="recent">Recent</option>
-        <option value="rating">Top rated</option>
-        <option value="title">A–Z</option>
-      </select>
+    <div id="homeTools">
+      <div class="search-row">
+        <input id="search" type="search" placeholder="Search everything…" autocomplete="off">
+        <button id="filterBtn" class="filter-btn" aria-expanded="false">Filter</button>
+      </div>
+      <div id="filterPanel" class="filter-panel" hidden>
+        <div class="field"><span class="lbl">Show</span>
+          <div id="statusSeg" class="seg" role="tablist">
+            <button data-status="" class="on">Everything</button>
+            <button data-status="want">Want to</button>
+            <button data-status="doing">In progress</button>
+            <button data-status="done">Done</button>
+          </div>
+        </div>
+        <label>Sort by
+          <select id="sort">
+            <option value="recent">Most recent</option>
+            <option value="rating">Highest rated</option>
+            <option value="title">Name, A–Z</option>
+          </select>
+        </label>
+      </div>
+      <nav id="catChips" class="chips" aria-label="Categories"></nav>
     </div>
-    <nav id="catChips" class="chips" aria-label="Categories"></nav>
-    <div id="statusSeg" class="seg" role="tablist">
-      <button data-status="" class="on">All</button>
-      <button data-status="want">Want to</button>
-      <button data-status="doing">In progress</button>
-      <button data-status="done">Done</button>
+    <div id="mapHead" class="map-head" hidden>
+      <h2>Your map</h2>
+      <p id="mapCount" class="muted"></p>
+      <label class="map-filter">Showing <select id="mapCat"></select></label>
     </div>
     <div id="activeTag" class="active-tag" hidden></div>
     <button id="shareCatBtn" class="link small share-cat" hidden></button>
@@ -58,7 +70,13 @@
     <p id="empty" class="empty" hidden></p>
   </main>
 
-  <button id="addBtn" class="fab" aria-label="Add entry">+</button>
+  <nav class="tabbar" aria-label="Main">
+    <button id="homeTab" class="tab on"><span>🏠</span>Home</button>
+    <button id="mapToggle" class="tab"><span>🗺️</span>Map</button>
+    <button id="addBtn" class="tab-add" aria-label="Add something new">＋</button>
+    <button id="inboxTab" class="tab"><span>📍</span>Visits<i id="inboxDot" hidden></i></button>
+    <button id="settingsBtn" class="tab"><span>⚙️</span>Settings</button>
+  </nav>
   <div id="toast" class="toast" hidden></div>
 
   <!-- Entry editor -->
@@ -109,11 +127,18 @@
 
         <div class="field" id="locField">
           <span class="lbl">Location</span>
-          <button type="button" id="locPickBtn" class="loc-btn">
-            <span class="loc-ico">📍</span>
-            <span class="loc-text"><b id="locName">Add a location</b><small id="locAddr"></small></span>
-          </button>
-          <button type="button" id="locClear" class="link danger small" hidden>Remove location</button>
+          <div id="locEmpty" class="row">
+            <button type="button" id="locHere" class="btn ghost">📍 Use where I am now</button>
+            <button type="button" id="locPickBtn" class="btn ghost">🗺️ Choose on map</button>
+          </div>
+          <div id="locSet" class="loc-set" hidden>
+            <div id="locMini" class="loc-mini" role="button" aria-label="Adjust location on the map"></div>
+            <div class="loc-text"><b id="locName"></b><small id="locAddr"></small></div>
+            <div class="row">
+              <button type="button" id="locAdjust" class="btn ghost">Adjust on map</button>
+              <button type="button" id="locClear" class="link danger small">Remove</button>
+            </div>
+          </div>
         </div>
 
         <div class="two">
@@ -138,13 +163,17 @@
     <div class="loc-body">
       <div class="loc-search">
         <input id="locQuery" type="search" placeholder="Search a place or address…" autocomplete="off">
-        <button type="button" id="locMe" class="icon-btn" title="Use my location and show places near me">◎</button>
+      </div>
+      <div class="loc-quick">
+        <button type="button" id="locMe" class="btn ghost">📍 Put the pin where I am</button>
+        <small id="locAcc" class="muted"></small>
       </div>
       <ul id="locResults" class="loc-results" hidden></ul>
       <div id="pickMap" class="pick-map"></div>
       <div class="loc-chosen">
         <input id="locLabel" placeholder="Name (e.g. Joe's Pizza)" maxlength="120">
         <small id="locChosenAddr" class="muted">Search, tap the map, or drag the pin.</small>
+        <small class="muted">The blue dot is where your phone thinks you are. Drag the pin to fine-tune.</small>
       </div>
     </div>
   </dialog>

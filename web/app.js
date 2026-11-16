@@ -37,6 +37,19 @@ const DEFAULT_CATS = [
   ['📚', 'Books'], ['📍', 'Places'], ['🍜', 'Food'], ['🎬', 'Movies & TV'], ['🎮', 'Games'], ['🎧', 'Music'],
 ];
 const STATUS = { want: 'Want to', doing: 'In progress', done: 'Done' };
+// Status wording that fits what the category holds.
+function statusWords(cat) {
+  const n = (cat && cat.name) || '';
+  if (cat && cat.special === 'cannabis') return { want: 'Want to try', doing: 'Have it now', done: 'Tried' };
+  if (/book|comic|manga/i.test(n)) return { want: 'Want to read', doing: 'Reading', done: 'Read' };
+  if (/movie|tv|show|film|anime|video/i.test(n)) return { want: 'Want to watch', doing: 'Watching', done: 'Watched' };
+  if (/music|album|song|podcast|audio/i.test(n)) return { want: 'Want to hear', doing: 'Listening', done: 'Heard' };
+  if (/game/i.test(n)) return { want: 'Want to play', doing: 'Playing', done: 'Played' };
+  if (/place|travel|trip/i.test(n)) return { want: 'Want to go', doing: 'Planning', done: 'Been' };
+  if (/food|restaurant|drink|coffee|bar|recipe/i.test(n)) return { want: 'Want to try', doing: 'Regular', done: 'Tried' };
+  return STATUS;
+}
+const statusLabel = e => statusWords(catById(e.categoryId))[e.status] || '';
 
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
 const now = () => Date.now();
@@ -115,7 +128,7 @@ function cardHTML(e, i = 0) {
       ${e.sharedBy ? `<div class="place">👤 from ${esc(e.sharedBy)}${e.sharedRating ? ' · their rating ' + '★'.repeat(e.sharedRating) : ''}</div>` : ''}
       ${cannaLine(e) ? `<div class="place">🌿 ${esc(cannaLine(e))}</div>` : ''}
       ${e.location ? `<div class="place">📍 ${esc(e.location.name || e.location.address || 'Pinned')}</div>` : ''}
-      <div class="meta"><span class="stars">${stars(e.rating)}</span><span class="badge ${e.status}">${STATUS[e.status] || ''}</span></div>
+      <div class="meta"><span class="stars">${stars(e.rating)}</span><span class="badge ${e.status}">${esc(statusLabel(e))}</span></div>
       ${e.tags?.length ? `<div class="tags">${e.tags.map(t => `<span class="tag">#${esc(t)}</span>`).join('')}</div>` : ''}
     </div></button>`;
 }
@@ -197,7 +210,7 @@ function render() {
   }
   const empty = $('#empty');
   empty.hidden = shelves || list.length > 0;
-  empty.textContent = entries().length ? 'Nothing matches those filters.' : 'Your trove is empty. Tap + to add your first book, place, or meal.';
+  empty.textContent = entries().length ? 'Nothing matches. Try clearing the search or the filter.' : 'Nothing here yet. Tap ＋ below to add your first book, place or meal.';
   const at = $('#activeTag');
   at.hidden = !ui.tag;
   at.innerHTML = ui.tag ? `Tag: <b>#${esc(ui.tag)}</b> <button id="clearTag">✕ clear</button>` : '';
@@ -205,9 +218,19 @@ function render() {
   if (typeof paintShareCat === 'function') paintShareCat(list);
   $('#list').hidden = ui.map;
   $('#placesMapWrap').hidden = !ui.map;
+  $('#mapHead').hidden = !ui.map;
+  $('#homeTools').hidden = ui.map;
+  // On the home screen the shelves already list every category, so the chips only show inside one.
+  $('#catChips').hidden = shelves || (!ui.cat && !ui.q.trim() && !ui.tag);
   $('#mapToggle').classList.toggle('on', ui.map);
+  $('#homeTab').classList.toggle('on', !ui.map);
+  const words = statusWords(ui.cat ? catById(ui.cat) : null);
+  document.querySelectorAll('#statusSeg button[data-status]').forEach(b => { if (b.dataset.status) b.textContent = words[b.dataset.status]; });
+  const filtering = !!ui.status || ui.sort !== 'recent';
+  $('#filterBtn').classList.toggle('active', filtering);
+  $('#filterBtn').textContent = filtering ? 'Filter •' : 'Filter';
   if (typeof syncViewNav === 'function') syncViewNav();
-  if (ui.map) { empty.hidden = true; renderPlacesMap(list); }
+  if (ui.map) { empty.hidden = true; at.hidden = true; $('#shareCatBtn').hidden = true; renderPlacesMap(); }
 }
 
 /* ---------- Maps (Leaflet + OpenStreetMap) ---------- */
@@ -216,7 +239,12 @@ const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">Open
 const hasLeaflet = () => typeof L !== 'undefined';
 let placesMap, placesLayer;
 
-function renderPlacesMap(list) {
+function renderPlacesMap() {
+  // The map is its own page: every entry with a location, narrowed only by its own category picker.
+  const sel = $('#mapCat'), keep = sel.value;
+  sel.innerHTML = '<option value="">All categories</option>' + cats().map(c => `<option value="${esc(c.id)}">${esc(c.emoji)} ${esc(c.name)}</option>`).join('');
+  sel.value = [...sel.options].some(o => o.value === keep) ? keep : '';
+  const list = entries().filter(e => !sel.value || e.categoryId === sel.value);
   if (!hasLeaflet()) { $('#mapEmptyNote').hidden = false; $('#mapEmptyNote').textContent = 'Map could not load (offline?).'; return; }
   if (!placesMap) {
     placesMap = L.map('placesMap', { zoomControl: true }).setView([39.5, -98.35], 4);
@@ -227,13 +255,14 @@ function renderPlacesMap(list) {
   placesLayer.clearLayers();
   const withLoc = list.filter(e => e.location && Number.isFinite(e.location.lat));
   $('#mapEmptyNote').hidden = withLoc.length > 0;
-  $('#mapEmptyNote').textContent = 'No entries with a location match these filters yet.';
+  $('#mapEmptyNote').textContent = 'Nothing on the map yet. Open an entry and add a location, and it will show up here as a pin.';
+  $('#mapCount').textContent = withLoc.length ? `${withLoc.length} ${withLoc.length === 1 ? 'entry has' : 'entries have'} a location. Tap a pin to see it.` : '';
   for (const e of withLoc) {
     const c = catById(e.categoryId);
     const pop = document.createElement('div');
     pop.className = 'map-pop';
     pop.innerHTML = (e.photo ? `<img src="${safeImg(e.photo)}" alt="">` : `<span class="e">${esc(c?.emoji || '📍')}</span>`) +
-      `<div><b>${esc(e.title)}</b><br><small>${stars(e.rating) || esc(STATUS[e.status] || '')}</small></div>`;
+      `<div><b>${esc(e.title)}</b><br><small>${stars(e.rating) || esc(statusLabel(e))}</small></div>`;
     pop.addEventListener('click', () => openEditor(items.get(e.id)));
     L.marker([e.location.lat, e.location.lng]).bindPopup(pop).addTo(placesLayer);
   }
@@ -243,7 +272,14 @@ function renderPlacesMap(list) {
 }
 
 // --- Location picker ---
-let pickMap, pickMarker, pick = null, searchT, searchAbort;
+let pickMap, pickMarker, pick = null, searchT, searchAbort, youDot = null, youRing = null;
+// Blue dot + accuracy ring: where the phone's GPS says you are (separate from the pin you're placing).
+function showYou(map, lat, lng, acc) {
+  if (youDot) { youDot.remove(); youRing && youRing.remove(); }
+  youRing = acc ? L.circle([lat, lng], { radius: acc, color: '#3b82f6', weight: 1, fillOpacity: 0.12, interactive: false }).addTo(map) : null;
+  youDot = L.circleMarker([lat, lng], { radius: 7, color: '#fff', weight: 2, fillColor: '#3b82f6', fillOpacity: 1, interactive: false }).addTo(map);
+  $('#locAcc').textContent = acc ? `GPS is accurate to about ${Math.round(acc)} m` : '';
+}
 
 async function geo(path) {
   const r = await fetch('https://nominatim.openstreetmap.org/' + path + '&format=jsonv2&addressdetails=0',
@@ -284,11 +320,11 @@ function openLocPicker() {
   }
   setTimeout(() => pickMap.invalidateSize(), 50);
   const cur = edLocation;
-  if (cur) { setPick(cur.lat, cur.lng, { name: cur.name, address: cur.address, zoom: 16 }); }
+  if (cur) { setPick(cur.lat, cur.lng, { name: cur.name, address: cur.address, zoom: 17 }); locateMe(true); }
   else {
     pick = null; $('#locLabel').value = '';
     if (pickMarker) { pickMarker.remove(); pickMarker = null; }
-    $('#locChosenAddr').textContent = 'Search, tap the map, or drag the pin.';
+    $('#locChosenAddr').textContent = 'Finding where you are…';
     locateMe(true);
   }
 }
@@ -297,11 +333,16 @@ function locateMe(quiet) {
   if (!navigator.geolocation) { if (!quiet) toast('Location not available'); return; }
   navigator.geolocation.getCurrentPosition(
     p => {
-      const { latitude: lat, longitude: lng } = p.coords;
-      if (quiet && !pick) { pickMap.setView([lat, lng], 16); nearby(lat, lng); return; } // centre the map and list what's here
-      setPick(lat, lng, { name: '' }); reverse(lat, lng); nearby(lat, lng);
+      const { latitude: lat, longitude: lng, accuracy } = p.coords;
+      showYou(pickMap, lat, lng, accuracy);
+      if (quiet && pick) return;                       // already had a pin: just show the blue dot
+      setPick(lat, lng, { name: '', zoom: 17 }); reverse(lat, lng); nearby(lat, lng);
     },
-    () => { if (!quiet) toast('Could not get your location — check permissions'); },
+    () => {
+      $('#locAcc').textContent = '';
+      if (!pick) $('#locChosenAddr').textContent = 'Search, tap the map, or drag the pin.';
+      if (!quiet) toast('Could not get your location — check that location is allowed for Trove');
+    },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
 }
 
@@ -378,14 +419,45 @@ function paintCanna() {
   $('#cannaFields').hidden = cat?.special !== 'cannabis';
   const [word, ph] = nameWord(cat);
   $('#titleLabel').textContent = word;
+  paintStatusWords(cat);
   if (typeof paintSpotifyFind === 'function') paintSpotifyFind(cat);
   if (typeof logPaint === 'function') logPaint(cat);
   $('#entryForm').title.placeholder = ph;
 }
+let miniMap = null, miniMarker = null;
 function paintLocation() {
-  $('#locName').textContent = edLocation ? (edLocation.name || 'Pinned location') : 'Add a location';
-  $('#locAddr').textContent = edLocation ? (edLocation.address || `${edLocation.lat}, ${edLocation.lng}`) : '';
-  $('#locClear').hidden = !edLocation;
+  const has = !!edLocation;
+  $('#locEmpty').hidden = has; $('#locSet').hidden = !has;
+  if (!has) return;
+  $('#locName').textContent = edLocation.name || 'Pinned spot';
+  $('#locAddr').textContent = edLocation.address || `${edLocation.lat}, ${edLocation.lng}`;
+  if (!hasLeaflet()) return;
+  // Small preview map so you can see the pin; tap it (or Adjust) to fine-tune.
+  if (!miniMap) {
+    miniMap = L.map('locMini', { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
+      touchZoom: false, boxZoom: false, keyboard: false, tap: false });
+    L.tileLayer(TILE_URL, { maxZoom: 19 }).addTo(miniMap);
+  }
+  const at = [edLocation.lat, edLocation.lng];
+  if (!miniMarker) miniMarker = L.marker(at, { interactive: false }).addTo(miniMap); else miniMarker.setLatLng(at);
+  miniMap.setView(at, 16);
+  setTimeout(() => { miniMap.invalidateSize(); miniMap.setView(at, 16); }, 120);
+}
+// One tap: pin this entry to where the phone is right now.
+function useHere() {
+  if (!navigator.geolocation) return toast('This device has no location service');
+  const btn = $('#locHere'); btn.disabled = true; btn.textContent = 'Finding you…';
+  const done = () => { btn.disabled = false; btn.textContent = '📍 Use where I am now'; };
+  navigator.geolocation.getCurrentPosition(async p => {
+    done();
+    const loc = { lat: +p.coords.latitude.toFixed(6), lng: +p.coords.longitude.toFixed(6), name: '', address: '' };
+    edLocation = loc; paintLocation();
+    try {
+      const r = await geo(`reverse?lat=${loc.lat}&lon=${loc.lng}&zoom=18`);
+      if (edLocation === loc) { loc.address = shortAddr(r.display_name); loc.name = r.name || ''; paintLocation(); }
+    } catch {}
+  }, () => { done(); toast('Could not get your location — check that location is allowed for Trove'); },
+  { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 });
 }
 
 /* ---------- Editor ---------- */
@@ -446,6 +518,10 @@ async function addPhotos(files) {
 function paintRating() {
   $('#ratingPick').innerHTML = [1, 2, 3, 4, 5].map(n =>
     `<button type="button" data-r="${n}" style="--i:${n}" class="${n <= edRating ? 'on' : ''}" aria-label="${n} stars">★</button>`).join('');
+}
+function paintStatusWords(cat) {
+  const w = statusWords(cat);
+  document.querySelectorAll('#statusPick button').forEach(b => { b.textContent = w[b.dataset.v]; });
 }
 function paintStatus() {
   document.querySelectorAll('#statusPick button').forEach(b => b.classList.toggle('on', b.dataset.v === edStatus));
@@ -643,7 +719,7 @@ function bind() {
     const b = e.target.closest('button'); if (!b) return;
     withTransition(() => {
       ui.status = b.dataset.status;
-      document.querySelectorAll('#statusSeg button').forEach(x => x.classList.toggle('on', x === b));
+      document.querySelectorAll('#statusSeg button').forEach(x => x.classList.toggle('on', x.dataset.status === ui.status));
       render();
     });
   });
@@ -705,7 +781,16 @@ function bind() {
     edLocation = { ...pick, name: $('#locLabel').value.trim() || pick.name || '' };
     paintLocation(); closeSheet($('#locPicker'));
   });
-  $('#mapToggle').addEventListener('click', () => withTransition(() => { ui.map = !ui.map; render(); }));
+  $('#mapToggle').addEventListener('click', () => { if (!ui.map) withTransition(() => { ui.map = true; render(); }); });
+  $('#homeTab').addEventListener('click', () => { withTransition(() => { ui.map = false; ui.cat = ''; ui.tag = ''; render(); }); scrollTo({ top: 0, behavior: 'smooth' }); });
+  $('#mapCat').addEventListener('change', () => renderPlacesMap());
+  $('#filterBtn').addEventListener('click', () => {
+    const p = $('#filterPanel'); p.hidden = !p.hidden; $('#filterBtn').setAttribute('aria-expanded', String(!p.hidden));
+  });
+  $('#locHere').addEventListener('click', useHere);
+  $('#locAdjust').addEventListener('click', openLocPicker);
+  $('#locMini').addEventListener('click', openLocPicker);
+  $('#inboxTab').addEventListener('click', () => { if (typeof openInbox === 'function') openInbox(); });
   $('#catSelect').addEventListener('change', paintCanna);
   $('#adultToggle').addEventListener('change', async e => {
     if (e.target.checked && !confirm('This turns on a Cannabis section meant for adults 21+ where it is legal. Continue?')) { e.target.checked = false; return; }
